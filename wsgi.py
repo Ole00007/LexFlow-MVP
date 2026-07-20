@@ -3,6 +3,9 @@
 import os
 from crm import create_app
 
+# Force rebuild marker
+BUILD_VERSION = "20260720_v2"
+
 app = create_app()
 
 if __name__ == "__main__":
