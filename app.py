@@ -243,19 +243,7 @@ def load_demo():
         conn.commit()
     flash("Demo data loaded.", "success")
     return redirect(url_for("admin"))
-...
-@app.route("/admin/load-demo", methods=["GET", "POST"])
-def load_demo():
-    ...
-    return redirect(url_for("admin"))
 
-
-# PASTE CRM BLOCK HERE
-
-
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port, debug=False)
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))

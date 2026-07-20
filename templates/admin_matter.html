@@ -12,7 +12,7 @@
         </p>
         <div class="actions">
             <a class="button button-secondary" href="{{ url_for('admin') }}">Back to admin list</a>
-            <a class="button" href="{{ url_for('status_page', token=matter['token']) }}" target="_blank" rel="noopener">Open client status</a>
+            <a class="button" href="{{ url_for('status', token=matter['token']) }}" target="_blank" rel="noopener">Open client status</a>
         </div>
     </div>
 
@@ -30,7 +30,7 @@
             <p><strong>Created:</strong> {{ matter["created_at"] }}</p>
             <p>
                 <strong>Tracking link:</strong>
-                <a href="{{ url_for('status_page', token=matter['token']) }}" target="_blank" rel="noopener">
+                <a href="{{ url_for('status', token=matter['token']) }}" target="_blank" rel="noopener">
                     /status/{{ matter["token"] }}
                 </a>
             </p>

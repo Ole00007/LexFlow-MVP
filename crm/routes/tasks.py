@@ -7,6 +7,13 @@ from ..models.user import User
 from datetime import datetime
 import csv
 import io
+from ..services.notifications import (
+    notify_task_assigned,
+    notify_task_completed,
+    notify_task_created,
+    notify_task_updated,
+    notify_task_deleted,
+)
 
 tasks_bp = Blueprint('tasks', __name__, url_prefix='/api/tasks')
 
@@ -99,62 +106,25 @@ def create_task():
         duedate=data.get('duedate'),
         eventid=data.get('eventid'),
         duration_minutes=data.get('duration_minutes'),
-        actual_duration_minutes=data.get('actual_duration_minutes')
+        actual_duration_minutes=data.get('actual_duration_minutes'),
+        parent_task_id=data.get('parent_task_id'),
+        depends_on=data.get('depends_on')
     )
     
     db.session.add(task)
     db.session.commit()
     
-    return jsonify(task.to_dict()), 201
-
-
-@tasks_bp.put('/<int:task_id>')
-@jwt_required()
-def update_task(task_id):
-    """Update an existing task."""
-    task = Task.query.get(task_id)
     
-    if not task:
-        return jsonify({'error': 'Task not found'}), 404
     
-    data = request.get_json()
-    
-    if 'title' in data:
-        task.title = data['title']
-    if 'description' in data:
-        task.description = data['description']
-    if 'status' in data:
-        status = data['status'].lower()
-        if status not in VALID_STATUSES:
-            return jsonify({'error': f'status must be one of {VALID_STATUSES}'}), 400
-        task.status = status
-    if 'priority' in data:
-        priority = data['priority'].lower()
-        if priority not in VALID_PRIORITIES:
-            return jsonify({'error': f'priority must be one of {VALID_PRIORITIES}'}), 400
-        task.priority = priority
-    if 'duedate' in data:
-        task.duedate = data['duedate']
-    if 'eventid' in data:
-        task.eventid = data['eventid']
-    if 'duration_minutes' in data:
-        task.duration_minutes = data['duration_minutes']
-    if 'actual_duration_minutes' in data:
-        task.actual_duration_minutes = data['actual_duration_minutes']
-    if 'userid' in data:
-        if data['userid'] is not None:
-            user = User.query.get(data['userid'])
-            if not user:
-                return jsonify({'error': 'User not found'}), 404
-        task.userid = data['userid']
-    if 'assigned_to' in data:
-        if data['assigned_to'] is not None:
-            assigned_user = User.query.get(data['assigned_to'])
-            if not assigned_user:
-                return jsonify({'error': 'assigned_to user not found'}), 404
-        task.assigned_to = data['assigned_to']
-    
-    db.session.commit()
+    # In-app notifications (conditional on what changed)
+    try:
+        actor = get_jwt_identity()
+        if 'assigned_to' in data:
+            notify_task_assigned(task, actor_id=actor)
+        else:
+            notify_task_updated(task, actor_id=actor, fields_changed=list(data.keys()))
+    except Exception:
+        pass
     
     return jsonify(task.to_dict()), 200
 
@@ -177,6 +147,14 @@ def complete_task(task_id):
     
     db.session.commit()
     
+    
+    
+    # In-app notification
+    try:
+        notify_task_completed(task, actor_id=get_jwt_identity())
+    except Exception:
+        pass
+    
     return jsonify({
         'message': 'Task marked as completed',
         'task': task.to_dict()
@@ -192,8 +170,29 @@ def delete_task(task_id):
     if not task:
         return jsonify({'error': 'Task not found'}), 404
     
+    # Capture state before deletion for notification
+    task_dict = task.to_dict()
+    assigned_to_before_delete = task.assigned_to
+    actor_id = get_jwt_identity()
+    
     db.session.delete(task)
     db.session.commit()
+    
+    
+    # In-app notification to the previously-assigned user
+    if assigned_to_before_delete and assigned_to_before_delete != actor_id:
+        try:
+            from ..services.notifications import create_notification
+            create_notification(
+                user_to=assigned_to_before_delete,
+                type='task_deleted',
+                reference_type='task',
+                reference_id=task.id,
+                title=f'Task deleted: {task_dict.get("title", "")}',
+                user_from=actor_id,
+            )
+        except Exception:
+            pass
     
     return jsonify({'message': 'Task deleted'}), 200
 
@@ -370,3 +369,152 @@ def import_tasks_csv():
     
     except Exception as e:
         return jsonify({'error': f'Failed to process CSV: {str(e)}'}), 400
+
+
+# ── Bulk Operations ──────────────────────────────────────────────────────────
+
+@tasks_bp.patch('/bulk-update')
+@jwt_required()
+def bulk_update_tasks():
+    """Bulk update status, priority, or assigned_to for multiple tasks.
+    Payload: {"task_ids": [1,2,3], "status": "in_progress", "priority": "high", "assigned_to": 5}
+    Returns: {"updated": 2, "failed": 1, "errors": [...]}
+    """
+    data = request.get_json()
+    
+    if not data or not data.get('task_ids'):
+        return jsonify({'error': 'task_ids array is required'}), 400
+    
+    task_ids = data.get('task_ids')
+    if not isinstance(task_ids, list):
+        return jsonify({'error': 'task_ids must be an array'}), 400
+    
+    updates = {}
+    if 'status' in data:
+        status = data['status'].lower()
+        if status not in VALID_STATUSES:
+            return jsonify({'error': f'status must be one of {VALID_STATUSES}'}), 400
+        updates['status'] = status
+    
+    if 'priority' in data:
+        priority = data['priority'].lower()
+        if priority not in VALID_PRIORITIES:
+            return jsonify({'error': f'priority must be one of {VALID_PRIORITIES}'}), 400
+        updates['priority'] = priority
+    
+    if 'assigned_to' in data:
+        assigned_user_id = data['assigned_to']
+        if assigned_user_id is not None:
+            user = User.query.get(assigned_user_id)
+            if not user:
+                return jsonify({'error': f'User ID {assigned_user_id} not found'}), 404
+        updates['assigned_to'] = assigned_user_id
+    
+    if not updates:
+        return jsonify({'error': 'At least one update field required (status, priority, assigned_to)'}), 400
+    
+    updated = 0
+    errors = []
+    
+    for task_id in task_ids:
+        task = Task.query.get(task_id)
+        if not task:
+            errors.append({'id': task_id, 'error': 'Task not found'})
+            continue
+        
+        for field, value in updates.items():
+            setattr(task, field, value)
+        
+        updated += 1
+    
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': f'Database error: {str(e)}'}), 500
+    
+    return jsonify({'updated': updated, 'failed': len(errors), 'errors': errors}), 200
+
+
+@tasks_bp.post('/bulk-complete')
+@jwt_required()
+def bulk_complete_tasks():
+    """Mark multiple tasks as completed.
+    Payload: {"task_ids": [1,2,3], "actual_duration_minutes": 60}
+    Returns: {"completed": 2, "failed": 1, "errors": [...]}
+    """
+    data = request.get_json() or {}
+    task_ids = data.get('task_ids')
+    
+    if not task_ids or not isinstance(task_ids, list):
+        return jsonify({'error': 'task_ids array is required'}), 400
+    
+    actual_duration = data.get('actual_duration_minutes')
+    if actual_duration is not None:
+        try:
+            actual_duration = int(actual_duration)
+            if actual_duration < 0:
+                return jsonify({'error': 'actual_duration_minutes must be >= 0'}), 400
+        except (ValueError, TypeError):
+            return jsonify({'error': 'actual_duration_minutes must be an integer'}), 400
+    
+    completed = 0
+    errors = []
+    
+    for task_id in task_ids:
+        task = Task.query.get(task_id)
+        if not task:
+            errors.append({'id': task_id, 'error': 'Task not found'})
+            continue
+        
+        task.status = 'completed'
+        task.completed_at = datetime.utcnow()
+        if actual_duration is not None:
+            task.actual_duration_minutes = actual_duration
+        
+        completed += 1
+    
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': f'Database error: {str(e)}'}), 500
+    
+    return jsonify({'completed': completed, 'failed': len(errors), 'errors': errors}), 200
+
+
+@tasks_bp.delete('/bulk-delete')
+@jwt_required()
+def bulk_delete_tasks():
+    """Delete multiple tasks.
+    Payload: {"task_ids": [1,2,3]}
+    Returns: {"deleted": 2, "failed": 1, "errors": [...]}
+    """
+    data = request.get_json()
+    
+    if not data or not data.get('task_ids'):
+        return jsonify({'error': 'task_ids array is required'}), 400
+    
+    task_ids = data.get('task_ids')
+    if not isinstance(task_ids, list):
+        return jsonify({'error': 'task_ids must be an array'}), 400
+    
+    deleted = 0
+    errors = []
+    
+    for task_id in task_ids:
+        task = Task.query.get(task_id)
+        if not task:
+            errors.append({'id': task_id, 'error': 'Task not found'})
+            continue
+        
+        db.session.delete(task)
+        deleted += 1
+    
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': f'Database error: {str(e)}'}), 500
+    
+    return jsonify({'deleted': deleted, 'failed': len(errors), 'errors': errors}), 200

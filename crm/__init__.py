@@ -15,12 +15,16 @@ def create_app():
     from .routes.cases import cases_bp
     from .routes.auth import auth_bp
     from .routes.tasks import tasks_bp
+    from .routes.kanban import kanban_bp
+    from .routes.notifications import notifications_bp
 
     app.register_blueprint(health_bp)
     app.register_blueprint(contacts_bp)
     app.register_blueprint(cases_bp)
     app.register_blueprint(auth_bp)
     app.register_blueprint(tasks_bp)
+    app.register_blueprint(kanban_bp)
+    app.register_blueprint(notifications_bp)
 
     @app.errorhandler(400)
     def bad_request(error):

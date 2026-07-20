@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Kanban — LexFlow</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:#f0f2f5;padding:12px;color:#222}
+header{display:flex;gap:8px;align-items:center;margin-bottom:12px}
+header input{flex:1;padding:6px;border:1px solid #ccc;border-radius:4px;font-size:14px}
+header button{padding:6px 14px;border:0;border-radius:4px;background:#4c6ef5;color:#fff;cursor:pointer}
+.board{display:flex;gap:12px;height:calc(100vh - 70px)}
+.col{flex:1;background:#e9ecef;border-radius:6px;padding:8px;display:flex;flex-direction:column;overflow:hidden}
+.col h3{font-size:14px;text-transform:uppercase;margin-bottom:8px;color:#555}
+.cards{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:6px}
+.card{background:#fff;border-radius:4px;padding:8px;box-shadow:0 1px 2px rgba(0,0,0,.08);cursor:grab;font-size:13px}
+.card.dragging{opacity:.4}
+.card .title{font-weight:700;margin-bottom:4px}
+.card .meta{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:11px;color:#666}
+.badge{display:inline-block;padding:1px 6px;border-radius:8px;color:#fff;font-size:10px;text-transform:uppercase}
+.b-low{background:#40c057}.b-medium{background:#fab005}.b-high{background:#f76707}.b-urgent{background:#e03131}
+.placeholder{color:#999;font-size:12px;padding:12px;text-align:center}
+.subtasks::before{content:"☰ "}
+.over{outline:2px dashed #4c6ef5}
+</style>
+</head>
+<body>
+<header>
+  <input id="jwt" placeholder="JWT token">
+  <button onclick="loadTasks()">Load</button>
+</header>
+<div class="board" id="board">
+  <div class="col" data-status="pending"><h3>Pending</h3><div class="cards"></div></div>
+  <div class="col" data-status="in_progress"><h3>In Progress</h3><div class="cards"></div></div>
+  <div class="col" data-status="completed"><h3>Completed</h3><div class="cards"></div></div>
+</div>
+<script>
+const STATUSES = ['pending','in_progress','completed'];
+const $ = s => document.querySelector(s);
+const input = $('#jwt');
+
+function token(){ return input.value || localStorage.getItem('jwt') || '' }
+
+async function loadTasks(){
+  const t = token();
+  if(t) localStorage.setItem('jwt', t);
+  STATUSES.forEach(s => {
+    const col = document.querySelector(`.col[data-status="${s}"] .cards`);
+    col.innerHTML = '<div class="placeholder">Loading…</div>';
+  });
+  try {
+    let page = 1, all = [];
+    while(true){
+      const res = await fetch(`/api/tasks/?status=&page=${page}&per_page=100`, {
+        headers: {'Authorization': `Bearer ${token()}`}
+      });
+      if(!res.ok) throw new Error(res.status);
+      const data = await res.json();
+      all = all.concat(data.items || []);
+      if(page >= (data.pages||1)) break;
+      page++;
+    }
+    STATUSES.forEach(s => {
+      const col = document.querySelector(`.col[data-status="${s}"] .cards`);
+      const tasks = all.filter(t => t.status === s);
+      if(!tasks.length){ col.innerHTML = '<div class="placeholder">No tasks</div>'; return; }
+      col.innerHTML = tasks.map(cardHTML).join('');
+    });
+    wireDnD();
+  } catch(e){ alert('Load failed: '+e.message); }
+}
+
+function cardHTML(t){
+  const bc = 'b-' + (t.priority||'low');
+  const due = t.duedate ? `<span>📅 ${t.duedate.slice(0,10)}</span>` : '';
+  const sub = (t.subtask_ids && t.subtask_ids.length) ? `<span class="subtasks">${t.subtask_ids.length}</span>` : '';
+  const assigned = t.assigned_to ? `<span>👤 ${t.assigned_to}</span>` : '<span>—</span>';
+  return `<div class="card" draggable="true" data-id="${t.id}">
+    <div class="title">${esc(t.title||'Untitled')}</div>
+    <div class="meta"><span class="badge ${bc}">${t.priority||'low'}</span>${assigned}${due}${sub}</div>
+  </div>`;
+}
+
+function esc(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]) }
+
+function wireDnD(){
+  document.querySelectorAll('.card').forEach(card => {
+    card.addEventListener('dragstart', e => {
+      e.dataTransfer.setData('text/plain', card.dataset.id);
+      card.classList.add('dragging');
+    });
+    card.addEventListener('dragend', () => card.classList.remove('dragging'));
+  });
+  document.querySelectorAll('.col').forEach(col => {
+    col.addEventListener('dragover', e => { e.preventDefault(); col.classList.add('over'); });
+    col.addEventListener('dragleave', () => col.classList.remove('over'));
+    col.addEventListener('drop', async e => {
+      e.preventDefault();
+      col.classList.remove('over');
+      const id = e.dataTransfer.getData('text/plain');
+      const newStatus = col.dataset.status;
+      const card = document.querySelector(`.card[data-id="${id}"]`);
+      const oldCol = card.parentElement.closest('.col');
+      try {
+        const res = await fetch(`/api/tasks/${id}`, {
+          method:'PATCH',
+          headers:{'Authorization':`Bearer ${token()}`,'Content-Type':'application/json'},
+          body: JSON.stringify({status: newStatus})
+        });
+        if(!res.ok) throw new Error(res.status);
+        col.querySelector('.cards').appendChild(card);
+        if(!oldCol.querySelector('.cards').querySelector('.card')){
+          oldCol.querySelector('.cards').innerHTML = '<div class="placeholder">No tasks</div>';
+        }
+        const ph = col.querySelector('.placeholder'); if(ph) ph.remove();
+      } catch(err){ alert('Move failed: '+err.message); }
+    });
+  });
+}
+
+(function init(){
+  const t = localStorage.getItem('jwt');
+  if(t) input.value = t;
+  if(t) loadTasks();
+})();
+</script>
+</body>
+</html>
