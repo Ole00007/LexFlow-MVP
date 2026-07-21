@@ -27,7 +27,7 @@ def upgrade():
         sa.Column('reference_id', sa.Integer(), nullable=True),
         sa.Column('title', sa.String(length=255), nullable=False),
         sa.Column('body', sa.Text(), nullable=True),
-        sa.Column('read', sa.Boolean(), nullable=False, server_default=sa.text('0')),
+        sa.Column('read', sa.Boolean(), nullable=False, server_default=sa.text('false')),
         sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.func.now()),
         sa.ForeignKeyConstraint(['user_to'], ['users.id'], ondelete='CASCADE'),
         sa.ForeignKeyConstraint(['user_from'], ['users.id'], ondelete='SET NULL'),

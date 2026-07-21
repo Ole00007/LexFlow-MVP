@@ -30,7 +30,7 @@ class Notification(db.Model):
     reference_id = db.Column(db.Integer, nullable=True)
     title = db.Column(db.String(255), nullable=False)
     body = db.Column(db.Text, nullable=True)
-    read = db.Column(db.Boolean, nullable=False, default=False, server_default=db.text("0"))
+    read = db.Column(db.Boolean, nullable=False, default=False, server_default='false')
     created_at = db.Column(db.DateTime, nullable=False, server_default=db.func.now())
 
     # Relationships (optional, for convenience joins)
