@@ -21,7 +21,8 @@ UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 ALLOWED_EXT = {"pdf", "doc", "docx", "png", "jpg", "jpeg", "txt"}
 
-resend.api_key       = os.environ.get("RESEND_API_KEY", "")
+if resend is not None:
+    resend.api_key = os.environ.get("RESEND_API_KEY", "")
 ADMIN_EMAIL          = os.environ.get("ADMIN_EMAIL", "")
 EMAIL_FROM           = os.environ.get("EMAIL_FROM", "onboarding@resend.dev")
 EMAIL_FROM_NAME      = os.environ.get("EMAIL_FROM_NAME", "LexFlow")
@@ -82,7 +83,7 @@ init_db()
 
 # ── Email helper ─────────────────────────────────────────────────────────────
 def send_intake_notification(matter_id, client_name, email, practice_area, urgency, token):
-    if not resend.api_key or not ADMIN_EMAIL:
+    if resend is None or not resend.api_key or not ADMIN_EMAIL:
         print("Email skipped: missing RESEND_API_KEY or ADMIN_EMAIL")
         return
     try:
