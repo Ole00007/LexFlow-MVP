@@ -17,7 +17,7 @@ python-dotenv==1.2.1
 SQLAlchemy==2.0.50
 typing_extensions==4.15.0
 Werkzeug==3.1.8
-gunicorn==21.2.0
+# gunicorn removed — using Procfile with python wsgi.py
 google-auth==2.31.0
 google-auth-oauthlib==1.2.0
 google-auth-httplib2==0.2.0

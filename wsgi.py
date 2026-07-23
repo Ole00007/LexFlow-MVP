@@ -1,7 +1,7 @@
 """WSGI entry point for Railway deployment — runs the old LexFlow app."""
 import os, sys
-from app import app as application
+from app import app
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
-    application.run(host="0.0.0.0", port=port, debug=False)
+    app.run(host="0.0.0.0", port=port, debug=False)
