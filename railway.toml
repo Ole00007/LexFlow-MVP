@@ -1,2 +1,2 @@
 [deploy]
-startCommand = "python wsgi.py"
+startCommand = "gunicorn --bind 0.0.0.0:$PORT --timeout 120 --workers 2 wsgi:app"

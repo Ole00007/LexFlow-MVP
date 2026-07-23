@@ -12,5 +12,5 @@ COPY . .
 # Expose the port Railway provides
 EXPOSE 5000
 
-# Start with python wsgi.py (wsgi.py imports app from app.py)
-CMD ["python", "wsgi.py"]
+# Railway will use startCommand from railway.toml; this is the fallback
+CMD gunicorn --bind 0.0.0.0:$PORT --timeout 120 --workers 2 wsgi:app
