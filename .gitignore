@@ -1,15 +1,30 @@
+# Virtual environments
+.venv*/
+venv/
+env/
+__pycache__/
+*.pyc
+*.pyo
+
+# Local databases
+*.db
+*.sqlite
+instance/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Environment
 .env
-.env.*
-node_modules/
-apps/api/node_modules/
-*.zip
-debug/
-api-keys-*.csv
-__pycache__/
-*.pyc
-__pycache__/
-*.pyc
-.venv/
-local_venv/
-*.bak
-*.BACKUP*
+.env.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test artifacts
+app_debug.py
+debug_routes.py
