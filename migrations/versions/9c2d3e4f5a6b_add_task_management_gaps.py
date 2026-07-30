@@ -55,23 +55,37 @@ def upgrade():
     except Exception:
         pass
     
-    # Change priority default from 'Medium' to 'medium'
-    op.alter_column('tasks', 'priority', existing_type=sa.String(20), existing_default='Medium', new_default='medium')
+    # Change priority default from 'Medium' to 'medium' (use batch mode for SQLite)
+    with op.batch_alter_table('tasks', schema=None) as batch_op:
+        batch_op.alter_column('priority', existing_type=sa.String(20), existing_default='Medium', new_default='medium')
     
     # Add foreign key for assigned_to
-    op.create_foreign_key('fk_tasks_assigned_to_users', 'tasks', 'users', ['assigned_to'], ['id'], ondelete='SET NULL')
+    try:
+        op.create_foreign_key('fk_tasks_assigned_to_users', 'tasks', 'users', ['assigned_to'], ['id'], ondelete='SET NULL')
+    except Exception:
+        pass
     
     # Add foreign key for eventid
-    op.create_foreign_key('fk_tasks_eventid_events', 'tasks', 'events', ['eventid'], ['id'], ondelete='SET NULL')
+    try:
+        op.create_foreign_key('fk_tasks_eventid_events', 'tasks', 'events', ['eventid'], ['id'], ondelete='SET NULL')
+    except Exception:
+        pass
     
     # Add columns to cases table
-    op.add_column('cases', sa.Column('eventid', sa.Integer(), nullable=True))
+    try:
+        op.add_column('cases', sa.Column('eventid', sa.Integer(), nullable=True))
+    except Exception:
+        pass
     
     # Change priority default from 'Medium' to 'medium'
-    op.alter_column('cases', 'priority', existing_type=sa.String(20), existing_default='Medium', new_default='medium')
+    with op.batch_alter_table('cases', schema=None) as batch_op:
+        batch_op.alter_column('priority', existing_type=sa.String(20), existing_default='Medium', new_default='medium')
     
     # Add foreign key for eventid in cases
-    op.create_foreign_key('fk_cases_eventid_events', 'cases', 'events', ['eventid'], ['id'], ondelete='SET NULL')
+    try:
+        op.create_foreign_key('fk_cases_eventid_events', 'cases', 'events', ['eventid'], ['id'], ondelete='SET NULL')
+    except Exception:
+        pass
 
 
 def downgrade():
