@@ -11,12 +11,15 @@ from app import (
 app = create_app()
 
 # ── Run migrations on startup ───────────────────────────────────────────────
+import os
 try:
     from alembic.config import Config
     from alembic import command
-    alembic_cfg = Config("migrations/alembic.ini")
+    os.chdir("migrations")
+    alembic_cfg = Config("alembic.ini")
     command.upgrade(alembic_cfg, "head")
     print("Migrations applied successfully")
+    os.chdir("..")
 except Exception as e:
     print(f"Migration warning: {e}")
     # Continue anyway - the app might work with existing schema
