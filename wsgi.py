@@ -10,6 +10,17 @@ from app import (
 # ── Create the CRM app (initialises db, migrate, jwt) ────────────────────────
 app = create_app()
 
+# ── Run migrations on startup ───────────────────────────────────────────────
+try:
+    from alembic.config import Config
+    from alembic import command
+    alembic_cfg = Config("migrations/alembic.ini")
+    command.upgrade(alembic_cfg, "head")
+    print("Migrations applied successfully")
+except Exception as e:
+    print(f"Migration warning: {e}")
+    # Continue anyway - the app might work with existing schema
+
 # ── Multiple template directories ─────────────────────────────────────────────
 # Legacy templates: templates/ (index, admin, status, etc.)
 # CRM templates:     crm/templates/ (kanban.html)
