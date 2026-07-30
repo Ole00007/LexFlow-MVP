@@ -20,10 +20,8 @@ def upgrade():
     with op.batch_alter_table('tasks', schema=None) as batch_op:
         batch_op.add_column(sa.Column('parent_task_id', sa.Integer(), nullable=True))
         batch_op.create_foreign_key(
-            'fk_tasks_parent_task_id',
-            'tasks', 'tasks',
-            ['parent_task_id'], ['id'],
-            ondelete='SET NULL'
+            'fk_tasks_parent_task_id', 'tasks', 'tasks',
+            ['parent_task_id'], ['id'], 'SET NULL'
         )
         batch_op.add_column(sa.Column('depends_on', sa.JSON(), nullable=True))
 
