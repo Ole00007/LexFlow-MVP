@@ -20,15 +20,15 @@ def create_app():
     from .routes.intake import intake_bp
     from .routes.appointments import appointments_bp
 
-    app.register_blueprint(health_bp)
-    app.register_blueprint(contacts_bp)
-    app.register_blueprint(cases_bp)
-    app.register_blueprint(auth_bp)
-    app.register_blueprint(tasks_bp)
-    app.register_blueprint(kanban_bp)
-    app.register_blueprint(notifications_bp)
-    app.register_blueprint(intake_bp)
-    app.register_blueprint(appointments_bp)
+    app.register_blueprint(health_bp, url_prefix="/api")
+    app.register_blueprint(contacts_bp, url_prefix="/api")
+    app.register_blueprint(cases_bp, url_prefix="/api")
+    app.register_blueprint(auth_bp, url_prefix="/api")
+    app.register_blueprint(tasks_bp, url_prefix="/api")
+    app.register_blueprint(kanban_bp, url_prefix="/api")
+    app.register_blueprint(notifications_bp, url_prefix="/api")
+    app.register_blueprint(intake_bp, url_prefix="/api/intake")
+    app.register_blueprint(appointments_bp, url_prefix="/api")
 
     @app.errorhandler(400)
     def bad_request(error):
