@@ -17,17 +17,15 @@ depends_on = None
 
 
 def upgrade():
-    # Add parent_task_id (self-referential FK for subtask hierarchy)
-    op.add_column('tasks', sa.Column('parent_task_id', sa.Integer(), nullable=True))
-    op.create_foreign_key(
-        'fk_tasks_parent_task_id',
-        'tasks', 'tasks',
-        ['parent_task_id'], ['id'],
-        ondelete='SET NULL'
-    )
-
-    # Add depends_on JSON column (array of task IDs)
-    op.add_column('tasks', sa.Column('depends_on', sa.JSON(), nullable=True))
+    with op.batch_alter_table('tasks', schema=None) as batch_op:
+        batch_op.add_column(sa.Column('parent_task_id', sa.Integer(), nullable=True))
+        batch_op.create_foreign_key(
+            'fk_tasks_parent_task_id',
+            'tasks', 'tasks',
+            ['parent_task_id'], ['id'],
+            ondelete='SET NULL'
+        )
+        batch_op.add_column(sa.Column('depends_on', sa.JSON(), nullable=True))
 
 
 def downgrade():
