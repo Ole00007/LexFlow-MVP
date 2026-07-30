@@ -31,6 +31,7 @@ VALID_STATUSES = ["New intake", "Reviewing", "Active", "Awaiting Client", "Close
 
 
 @intake_bp.post("/")
+@intake_bp.post("")
 def create_intake():
     """Public intake endpoint.
 
