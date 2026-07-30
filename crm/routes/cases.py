@@ -5,10 +5,11 @@ from ..models.case import Case
 from ..models.contact import Contact
 from ..models.user import User
 from datetime import date, datetime
+from ..services.notifications import notify_case_status_changed
 
 cases_bp = Blueprint("cases", __name__, url_prefix="/api")
 
-VALID_CASE_STATUSES = ["Intake", "Review", "Closed"]
+VALID_CASE_STATUSES = ["Intake", "Reviewing", "Active", "Awaiting Client", "Closed"]
 VALID_PRIORITIES = ['low', 'medium', 'high', 'urgent']
 
 
@@ -111,10 +112,22 @@ def update_case(case_id):
         case.title = data["title"]
     if "casetype" in data:
         case.casetype = data["casetype"]
+    old_status = case.status
     if "status" in data:
-        status = data["status"]
-        if status in VALID_CASE_STATUSES:
-            case.status = status
+        new_status = data["status"]
+        if new_status in VALID_CASE_STATUSES:
+            case.status = new_status
+
+    # ... notify if status changed
+    if old_status != case.status:
+        try:
+            # Find contact for case
+            contact = Contact.query.get(case.contactid)
+            notify_case_status_changed(
+                contact, case, old_status, case.status
+            )
+        except Exception:
+            pass  # notification failure must not block the update
     if "priority" in data:
         priority = data["priority"].lower()
         if priority in VALID_PRIORITIES:

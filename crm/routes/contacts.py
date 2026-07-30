@@ -15,15 +15,18 @@ def create_contact():
     data = request.get_json()
     if not data:
         return jsonify({'error': 'No data provided'}), 400
-    if not data.get('full_name'):
-        return jsonify({'error': 'full_name is required'}), 400
+    if not data.get('fullname') and not data.get('full_name'):
+        return jsonify({'error': 'fullname is required'}), 400
 
     contact = Contact(
         ownerid=data.get('ownerid'),
-        fullname=data.get('full_name'),
+        fullname=data.get('fullname') or data.get('full_name'),
         email=data.get('email'),
         phone=data.get('phone'),
         company=data.get('company'),
+        source=data.get('source', 'manual'),
+        gdpr_consent=bool(data.get('gdpr_consent', False)),
+        gdpr_consent_ts=datetime.utcnow() if data.get('gdpr_consent') else None,
         status=data.get('status', 'lead'),
         notes=data.get('notes')
     )

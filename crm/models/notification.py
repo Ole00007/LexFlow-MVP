@@ -10,11 +10,17 @@ VALID_NOTIFICATION_TYPES = [
     'task_deleted',
     'task_comment',
     'case_updated',
+    'case_intake',
+    'case_status_changed',
+    'case_assigned',
+    'appointment_requested',
+    'appointment_confirmed',
+    'appointment_cancelled',
     'mention',
     'broadcast',
 ]
 
-VALID_REFERENCE_TYPES = ["task", "case", None]
+VALID_REFERENCE_TYPES = ["task", "case", "event", None]
 
 
 class Notification(db.Model):

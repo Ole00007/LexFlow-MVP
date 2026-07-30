@@ -151,3 +151,55 @@ def notify_task_deleted(task_id, actor_id):
     # passed in or looked up beforehand. For now, skip if no user_to provided.
     # Caller should pass task.assigned_to or cache it before deletion.
     return None  # Placeholder — bulk delete / delete routes should handle their own notify with cached user_id
+
+
+# ── Domain helpers — case / intake events ─────────────────────────────────────
+
+
+def notify_case_intake(contact, case=None):
+    """Notify the team that a new case intake was received.
+
+    Privacy-first: no sensitive case details in notification body.
+    """
+    return create_notification(
+        user_to=None,  # broadcast — visible to everyone
+        type="case_intake",
+        reference_type="case",
+        reference_id=case.id if case else None,
+        title=f"New intake from {contact.fullname}",
+        body=f"{contact.email} — source: {contact.source}",
+    )
+
+
+def notify_case_status_changed(contact, case, old_status, new_status):
+    """Notify team + client when case status changes.
+
+    Privacy-first: never include full case notes or sensitive legal details.
+    - Team always notified.
+    - Client notified only when case is being taken (New intake → Reviewing/Active).
+    """
+    if not case:
+        return None
+
+    # Team notification (always)
+    team_notif = create_notification(
+        user_to=None,  # broadcast
+        type="case_status_changed",
+        reference_type="case",
+        reference_id=case.id,
+        title=f"Case #{case.id} status: {old_status} → {new_status}",
+        body=f"Case #{case.id} status updated — log in to view details",
+    )
+
+    # Client notification — only when case is being taken
+    if old_status == "New intake" and new_status in ("Reviewing", "Active"):
+        create_notification(
+            user_to=None,  # placeholder — would be contact ID if Contact had a User FK
+            type="case_assigned",
+            reference_type="case",
+            reference_id=case.id,
+            title=f"La sua pratica è stata accettata",
+            body=f"Case #{case.id} — The legal team is now reviewing your case.",
+        )
+
+    return team_notif
