@@ -17,27 +17,43 @@ depends_on = None
 
 
 def upgrade():
-    # Create events table
-    op.create_table('events',
-        sa.Column('id', sa.Integer(), nullable=False),
-        sa.Column('title', sa.String(255), nullable=False),
-        sa.Column('description', sa.Text(), nullable=True),
-        sa.Column('event_date', sa.DateTime(), nullable=False),
-        sa.Column('event_type', sa.String(50), nullable=True),
-        sa.Column('location', sa.String(255), nullable=True),
-        sa.Column('google_event_id', sa.String(255), nullable=True),
-        sa.Column('createdat', sa.DateTime(), server_default=sa.func.now(), nullable=False),
-        sa.Column('updatedat', sa.DateTime(), server_default=sa.func.now(), onupdate=sa.func.now(), nullable=False),
-        sa.PrimaryKeyConstraint('id'),
-        sa.UniqueConstraint('google_event_id')
+    # Create events table if it doesn't exist
+    op.execute("""
+    CREATE TABLE IF NOT EXISTS events (
+        id INTEGER NOT NULL PRIMARY KEY,
+        title VARCHAR(255) NOT NULL,
+        description TEXT,
+        event_date DATETIME NOT NULL,
+        event_type VARCHAR(50),
+        location VARCHAR(255),
+        google_event_id VARCHAR(255),
+        createdat DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+        updatedat DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+        UNIQUE(google_event_id)
     )
+    """)
     
-    # Add columns to tasks table
-    op.add_column('tasks', sa.Column('assigned_to', sa.Integer(), nullable=True))
-    op.add_column('tasks', sa.Column('eventid', sa.Integer(), nullable=True))
-    op.add_column('tasks', sa.Column('duration_minutes', sa.Integer(), nullable=True))
-    op.add_column('tasks', sa.Column('actual_duration_minutes', sa.Integer(), nullable=True))
-    op.add_column('tasks', sa.Column('completed_at', sa.DateTime(), nullable=True))
+    # Add columns to tasks table (handle if they already exist)
+    try:
+        op.add_column('tasks', sa.Column('assigned_to', sa.Integer(), nullable=True))
+    except Exception:
+        pass
+    try:
+        op.add_column('tasks', sa.Column('eventid', sa.Integer(), nullable=True))
+    except Exception:
+        pass
+    try:
+        op.add_column('tasks', sa.Column('duration_minutes', sa.Integer(), nullable=True))
+    except Exception:
+        pass
+    try:
+        op.add_column('tasks', sa.Column('actual_duration_minutes', sa.Integer(), nullable=True))
+    except Exception:
+        pass
+    try:
+        op.add_column('tasks', sa.Column('completed_at', sa.DateTime(), nullable=True))
+    except Exception:
+        pass
     
     # Change priority default from 'Medium' to 'medium'
     op.alter_column('tasks', 'priority', existing_type=sa.String(20), existing_default='Medium', new_default='medium')
