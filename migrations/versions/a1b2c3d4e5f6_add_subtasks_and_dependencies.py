@@ -19,14 +19,12 @@ depends_on = None
 def upgrade():
     with op.batch_alter_table('tasks', schema=None) as batch_op:
         batch_op.add_column(sa.Column('parent_task_id', sa.Integer(), nullable=True))
-        batch_op.create_foreign_key(
-            'fk_tasks_parent_task_id', 'tasks', 'tasks',
-            ['parent_task_id'], ['id'], 'SET NULL'
-        )
         batch_op.add_column(sa.Column('depends_on', sa.JSON(), nullable=True))
+        # SQLite batch mode cannot add FK constraints via create_foreign_key.
+        # The ORM relationship is handled by the model definition.
 
 
 def downgrade():
-    op.drop_column('tasks', 'depends_on')
-    op.drop_constraint('fk_tasks_parent_task_id', 'tasks', type_='foreignkey')
-    op.drop_column('tasks', 'parent_task_id')
+    with op.batch_alter_table('tasks', schema=None) as batch_op:
+        batch_op.drop_column('depends_on')
+        batch_op.drop_column('parent_task_id')
