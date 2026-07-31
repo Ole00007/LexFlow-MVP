@@ -394,6 +394,8 @@
       color: rgba(255,255,255,0.3);
       flex-shrink: 0;
       position: relative;
+      overflow: hidden;
+      cursor: pointer;
     }
 
     .hero-avatar::after {
@@ -402,6 +404,62 @@
       inset: -8px;
       border-radius: 50%;
       border: 2px dashed rgba(31,174,114,0.3);
+      animation: rotate-dash 20s linear infinite;
+    }
+
+    @keyframes rotate-dash {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Animated placeholder for photo/video — replace src in future */
+    .hero-avatar-inner {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: linear-gradient(135deg, rgba(31,174,114,0.1), rgba(14,42,71,0.2));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3rem;
+      color: rgba(255,255,255,0.5);
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Video placeholder (light video / animated photo) */
+    .hero-avatar video {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 50%;
+      display: none; /* Hide until real video is inserted */
+    }
+
+    .hero-avatar.has-video video {
+      display: block;
+    }
+
+    .hero-avatar.has-video .hero-avatar-inner {
+      display: none;
+    }
+
+    /* Pulsing ring animation for placeholder */
+    .hero-avatar::before {
+      content: '';
+      position: absolute;
+      inset: -12px;
+      border-radius: 50%;
+      border: 2px solid var(--accent);
+      opacity: 0.4;
+      animation: pulse-ring 2s ease-out infinite;
+    }
+
+    @keyframes pulse-ring {
+      0% { transform: scale(1); opacity: 0.4; }
+      100% { transform: scale(1.15); opacity: 0; }
     }
 
     @media (max-width: 900px) {
@@ -1272,7 +1330,14 @@
           <a href="tel:+393805279810" class="btn btn-outline">📞 Chiama ora</a>
         </div>
       </div>
-      <div class="hero-avatar">👨‍⚖️</div>
+      <div class="hero-avatar">
+        <div class="hero-avatar-inner">👨‍⚖️</div>
+        <!-- VIDEO PLACEHOLDER: Uncomment and add src when real video/animated photo is ready -->
+        <!-- <video autoplay muted loop playsinline>
+          <source src="path/to/avatar-video.mp4" type="video/mp4">
+        </video> -->
+        <!-- When video is ready, also add class="has-video" to the .hero-avatar div above -->
+      </div>
     </div>
   </section>
 
@@ -1531,7 +1596,8 @@
             <li><a href="#chi-sono">Chi Sono</a></li>
             <li><a href="#contatti">Contatti</a></li>
             <li><a href="#blog">Blog</a></li>
-            <li><a href="#" id="privacyLink">Privacy Policy</a></li>
+            <li><a href="#" onclick="openModal('privacyModal'); return false;">Privacy Policy</a></li>
+            <li><a href="#" onclick="openModal('cookieModal'); return false;">Cookie Policy</a></li>
           </ul>
         </div>
 
@@ -1548,12 +1614,72 @@
       <div class="footer-bottom">
         <span>© 2025 Studio Legale Avv. Diego Pagliano — Tutti i diritti riservati.</span>
         <span>
-          <a href="#" id="privacyLinkFooter">Privacy Policy</a> · 
-          <a href="#" id="cookieLink">Cookie Policy</a>
+          <a href="#" onclick="openModal('privacyModal'); return false;">Privacy Policy</a> · 
+          <a href="#" onclick="openModal('cookieModal'); return false;">Cookie Policy</a>
         </span>
+      </div>
+
+      <div style="margin-top: 20px; text-align: center; font-size: 0.78rem; color: rgba(255,255,255,0.4);">
+        <p style="margin-bottom: 6px;">
+          Lo Studio Legale Pagliano si impegna a trattare i dati personali esclusivamente per le finalità legate alla prestazione di assistenza legale, 
+          nel rispetto del Regolamento UE 2016/679 (GDPR) e del D.Lgs. 196/2003 (Codice Privacy). 
+          I Suoi dati non saranno ceduti a terzi senza il Suo consenso esplicito.
+        </p>
+        <p>
+          Sito web progettato e sviluppato da 
+          <a href="#" style="color: rgba(255,255,255,0.6); text-decoration: underline;">AVIBE Agency</a>
+          <!-- TODO: Insert AVIBE Agency logo here — add img tag when logo is ready -->
+        </p>
       </div>
     </div>
   </footer>
+
+  <!-- ═══════════════ COOKIE CONSENT BANNER ═══════════════ -->
+  <div id="cookieBanner" style="display:none; position:fixed; bottom:0; left:0; right:0; background:var(--primary-dark); color:#fff; padding:20px; z-index:5000; border-top:1px solid rgba(255,255,255,0.1);">
+    <div style="max-width:1200px; margin:0 auto; display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:16px;">
+      <div style="font-size:0.9rem; flex:1; min-width:300px;">
+        <strong>Cookie Policy</strong><br>
+        Questo sito utilizza cookie tecnici essenziali per il funzionamento. Non tracciamo utenti né utilizziamo cookie di profilazione.
+        <a href="#" onclick="openModal('cookieModal'); return false;" style="color:#1FAE72; text-decoration:underline;">Maggiori informazioni</a>
+      </div>
+      <button onclick="acceptCookies()" style="padding:10px 24px; background:#1FAE72; color:#fff; border:none; border-radius:6px; font-weight:600; cursor:pointer; white-space:nowrap;">Accetta</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════ PRIVACY POLICY MODAL ═══════════════ -->
+  <div id="privacyModal" class="modal-overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:6000; justify-content:center; align-items:center;">
+    <div class="modal-content" style="background:var(--bg); border-radius:var(--radius-lg); padding:40px; max-width:600px; width:90%; max-height:80vh; overflow-y:auto; box-shadow:var(--shadow-lg);">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+        <h3 style="font-family:var(--font-serif); font-size:1.5rem; color:var(--text);">Privacy Policy</h3>
+        <button onclick="closeModal('privacyModal')" style="background:none; border:none; font-size:1.5rem; cursor:pointer; color:var(--textc);">✕</button>
+      </div>
+      <div style="font-size:0.9rem; color:var(--textc); line-height:1.8;">
+        <p><strong>Responsabile del trattamento:</strong> Studio Legale Avv. Diego Pagliano, Via Gropallo 10/2, 16122 Genova</p>
+        <p><strong>Finalità:</strong> I dati personali raccolti tramite il sito (nome, email, telefono, messaggio) sono trattati esclusivamente per le finalità legate alla prestazione di assistenza legale richiesta dall'utente.</p>
+        <p><strong>Base giuridica:</strong> Il trattamento è basato sul consenso dell'interessato (Art. 6, GDPR 2016/679) e sull'esecuzione di misure pre-contrattuali (Art. 6(1)(b) GDPR).</p>
+        <p><strong>Diritti dell'interessato:</strong> Ai sensi degli Artt. 15-22 del GDPR, l'utente ha diritto di accesso, rettifica, cancellazione, limitazione, portabilità dei dati e opposizione al trattamento.</p>
+        <p><strong>Conservazione:</strong> I dati sono conservati per la durata necessaria all'erogazione del servizio legale e successivamente per il tempo previsto dalla normativa vigente.</p>
+        <p><strong>Contatti:</strong> Per esercitare i propri diritti, contattare: studio@avvocatopagliano.it</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ COOKIE POLICY MODAL ═══════════════ -->
+  <div id="cookieModal" class="modal-overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:6000; justify-content:center; align-items:center;">
+    <div class="modal-content" style="background:var(--bg); border-radius:var(--radius-lg); padding:40px; max-width:600px; width:90%; max-height:80vh; overflow-y:auto; box-shadow:var(--shadow-lg);">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+        <h3 style="font-family:var(--font-serif); font-size:1.5rem; color:var(--text);">Cookie Policy</h3>
+        <button onclick="closeModal('cookieModal')" style="background:none; border:none; font-size:1.5rem; cursor:pointer; color:var(--textc);">✕</button>
+      </div>
+      <div style="font-size:0.9rem; color:var(--textc); line-height:1.8;">
+        <p><strong>Cosa sono i cookie:</strong> I cookie sono piccoli file di testo che un sito web memorizza sul dispositivo dell'utente per migliorare l'esperienza di navigazione.</p>
+        <p><strong>Cookie tecnici utilizzati:</strong> Questo sito utilizza esclusivamente cookie tecnici necessari per il funzionamento del sito (es. preferenza del tema chiaro/scuro memorizzata in localStorage).</p>
+        <p><strong>Cookie di profilazione:</strong> Questo sito NON utilizza cookie di profilazione, cookie di terze parti per tracciamento utenti, né pixel di analytics.</p>
+        <p><strong>localStorage:</strong> Il sito utilizza localStorage per memorizzare la preferenza del tema (chiaro/scuro) dell'utente. Questa informazione è salvata localmente sul dispositivo dell'utente e non viene trasmessa a server terzi.</p>
+        <p><strong>Gestione cookie:</strong> Poiché questo sito utilizza solo cookie tecnici essenziali, non è necessario un banner di consenso dettagliato. Tuttavia, per trasparenza, informiamo che il tema scelto viene salvato solo sul dispositivo dell'utente.</p>
+      </div>
+    </div>
+  </div>
 
   <!-- ═══════════════ CHAT TOGGLE BUTTON ═══════════════ -->
   <button id="chat-toggle-btn" title="Apri chat con Alessia" aria-label="Apri assistente virtuale">💬</button>
@@ -1687,7 +1813,7 @@
         var fd = new FormData(form);
 
         // POST to /api/intake
-        fetch('/api/intake', {
+        fetch('https://web-production-ab54f.up.railway.app/api/intake', {
           method: 'POST',
           body: fd,
           // No Content-Type header — let browser set it for FormData
@@ -1728,6 +1854,39 @@
         }
       });
     })();
+
+    /* ── Modal helpers ─────────────────────────────────────── */
+    window.openModal = function(id) {
+      var el = document.getElementById(id);
+      if (el) el.style.display = 'flex';
+    };
+    window.closeModal = function(id) {
+      var el = document.getElementById(id);
+      if (el) el.style.display = 'none';
+    };
+    // Close modal on overlay click
+    document.querySelectorAll('.modal-overlay').forEach(function(overlay) {
+      overlay.addEventListener('click', function(e) {
+        if (e.target === overlay) {
+          overlay.style.display = 'none';
+        }
+      });
+    });
+
+    /* ── Cookie banner ─────────────────────────────────────── */
+    (function() {
+      if (!localStorage.getItem('cookie-accepted')) {
+        setTimeout(function() {
+          var banner = document.getElementById('cookieBanner');
+          if (banner) banner.style.display = 'block';
+        }, 2000);
+      }
+    })();
+    window.acceptCookies = function() {
+      localStorage.setItem('cookie-accepted', 'true');
+      var banner = document.getElementById('cookieBanner');
+      if (banner) banner.style.display = 'none';
+    };
   </script>
 
   <!-- ═══════════════ CHAT WIDGET JS ──────────────────────── -->
