@@ -58,9 +58,11 @@ def create_intake():
             "phone": request.form.get("phone", "").strip(),
             "company": request.form.get("company", "").strip(),
             "source": request.form.get("source", "").strip(),
-            "casetype": request.form.get("casetype", "").strip(),
+            # Accept both "casetype" (CRM convention) and "practice_area" (LP form convention)
+            "casetype": (request.form.get("casetype") or request.form.get("practice_area", "")).strip(),
             "urgency": request.form.get("urgency", "medium").strip().lower(),
-            "description": request.form.get("description", "").strip(),
+            # Accept both "description" (CRM convention) and "message" (LP form convention)
+            "description": (request.form.get("description") or request.form.get("message", "")).strip(),
             "gdpr_consent": request.form.get("gdpr_consent"),
         }
 
