@@ -19,7 +19,22 @@ try:
     with app.app_context():
         os.chdir("migrations")
         alembic_cfg = Config("alembic.ini")
-        command.upgrade(alembic_cfg, "head")
+        # Guard against concurrent migration runs (gunicorn spawns 2 workers,
+        # and the Procfile also runs `alembic upgrade head`). PostgreSQL
+        # advisory lock makes the upgrade single-flight per DB.
+        db_url = app.config.get("SQLALCHEMY_DATABASE_URI", "")
+        if db_url.startswith("postgres"):
+            from sqlalchemy import text
+            from crm.extensions import db as crm_db
+            conn = crm_db.engine.connect()
+            try:
+                conn.execute(text("SELECT pg_advisory_lock(724391)"))
+                command.upgrade(alembic_cfg, "head")
+            finally:
+                conn.execute(text("SELECT pg_advisory_unlock(724391)"))
+                conn.close()
+        else:
+            command.upgrade(alembic_cfg, "head")
         print("Migrations applied successfully")
         os.chdir("..")
 except Exception as e:
