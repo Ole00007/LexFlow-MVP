@@ -18,17 +18,19 @@ depends_on = None
 
 def upgrade():
     # Create events table if it doesn't exist
+    # NOTE: use TIMESTAMP (not SQLite-only DATETIME) so this migration also
+    # works on PostgreSQL (Railway production DB).
     op.execute("""
     CREATE TABLE IF NOT EXISTS events (
         id INTEGER NOT NULL PRIMARY KEY,
         title VARCHAR(255) NOT NULL,
         description TEXT,
-        event_date DATETIME NOT NULL,
+        event_date TIMESTAMP NOT NULL,
         event_type VARCHAR(50),
         location VARCHAR(255),
         google_event_id VARCHAR(255),
-        createdat DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-        updatedat DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+        createdat TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+        updatedat TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
         UNIQUE(google_event_id)
     )
     """)
