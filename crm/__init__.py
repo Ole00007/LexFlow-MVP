@@ -1,10 +1,25 @@
 from flask import Flask, jsonify
+from flask_cors import CORS
 from .config import Config
 from .extensions import db, migrate, jwt
 
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
+
+    # CORS — allow the Pagliano LP (Netlify) to POST to the public intake API.
+    # Covers both /api/intake and /api/intake/ (flask-cors handles OPTIONS
+    # preflight automatically for the /api/* routes).
+    CORS(app, resources={
+        r"/api/*": {
+            "origins": [
+                "https://verdant-crumble-021449.netlify.app",
+                "https://*.netlify.app",
+            ],
+            "methods": ["GET", "POST", "OPTIONS"],
+            "allow_headers": ["Content-Type", "Authorization"],
+        }
+    })
 
     db.init_app(app)
     migrate.init_app(app, db)

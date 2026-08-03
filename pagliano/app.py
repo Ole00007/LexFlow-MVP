@@ -1,8 +1,10 @@
 """
 Pagliano Law Firm — Landing Page Flask App
-Serves the landing page and provides the /api/intake endpoint.
+Serves the landing page. /api/intake proxies to the production CRM on Railway.
 """
 import os
+import urllib.request
+import json
 from pathlib import Path
 from flask import Flask, jsonify, request, render_template
 from flask_cors import CORS
@@ -12,19 +14,20 @@ load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent
 
+# ── Production CRM intake endpoint ────────────────────────────────────────────
+# Local app.py acts as a CORS-safe proxy so the browser form on localhost
+# can reach the production CRM without CORS issues.
+PRODUCTION_INTAKE_URL = os.environ.get(
+    "PRODUCTION_INTAKE_URL",
+    "https://web-production-ab54f.up.railway.app/api/intake",
+)
+
 app = Flask(__name__,
             template_folder=str(BASE_DIR / "templates"),
             static_folder=str(BASE_DIR / "static"))
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "pagliano-dev-secret")
-app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{BASE_DIR / 'pagliano.db'}"
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 CORS(app, resources={r"/api/*": {"origins": "*"}})
-
-# Import DB models (lazy to avoid circular issues)
-from database import db, Contact, Case
-
-db.init_app(app)
 
 
 @app.route("/")
@@ -35,75 +38,36 @@ def index():
 @app.route("/api/intake", methods=["POST"])
 def intake():
     """
-    Landing-page intake endpoint.
-    Accepts FormData (x-www-form-urlencoded or multipart).
-    Creates a Contact and an optional Case record.
+    Proxy /api/intake to the production CRM on Railway.
+    This avoids CORS issues: the browser posts to localhost,
+    our Flask app forwards to Railway, and returns the result.
     """
-    data = request.form or request.get_json(silent=True) or {}
-    if isinstance(data, dict):
-        fullname = data.get("fullname", "").strip()
-        email = data.get("email", "").strip()
-        phone = data.get("phone", "").strip()
-        message = data.get("message", "").strip()
-        gdpr = data.get("gdpr_consent", "")
-        source = data.get("source", "pagliano_lp")
-        practice_area = data.get("practice_area", "")
-        urgency = data.get("urgency", "medium")
-    else:
-        # Fallback for formdata-as-object
-        fullname = (data.get("fullname") or "").strip()
-        email = (data.get("email") or "").strip()
-        phone = (data.get("phone") or "").strip()
-        message = (data.get("message") or "").strip()
-        gdpr = data.get("gdpr_consent", "")
-        source = data.get("source", "pagliano_lp")
-        practice_area = data.get("practice_area", "")
-        urgency = data.get("urgency", "medium")
-
-    # Validate required fields
-    errors = []
-    if not fullname:
-        errors.append("fullname is required")
-    if not email:
-        errors.append("email is required")
-    elif "@" not in email:
-        errors.append("email is invalid")
-    if gdpr != "true" and gdpr != "True":
-        errors.append("gdpr_consent is required")
-
-    if errors:
-        return jsonify({"error": errors[0], "detail": errors}), 400
+    # Forward the entire request body and form data to Railway
+    headers = {"Content-Type": request.content_type or "application/x-www-form-urlencoded"}
 
     try:
-        contact = Contact(
-            fullname=fullname,
-            email=email,
-            phone=phone or None,
-            source=source,
-            gdpr_consent=bool(gdpr),
+        # Read the body exactly once
+        body = request.get_data()
+
+        # Build the urllib request
+        req = urllib.request.Request(
+            PRODUCTION_INTAKE_URL,
+            data=body,
+            headers=headers,
+            method="POST",
         )
-        db.session.add(contact)
-        db.session.flush()
 
-        # Create a case if a practice area was selected
-        if practice_area:
-            case = Case(
-                contact_id=contact.id,
-                practice_area=practice_area,
-                urgency=urgency,
-                description=message or None,
-            )
-            db.session.add(case)
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            resp_body = resp.read()
+            status = resp.status
+            data = json.loads(resp_body)
 
-        db.session.commit()
-        return jsonify({
-            "ok": True,
-            "message": "Request submitted successfully.",
-            "contact_id": contact.id,
-        }), 201
+        return jsonify(data), status
+
+    except urllib.error.HTTPError as exc:
+        return jsonify({"error": "Internal server error", "detail": str(exc)}), exc.code
     except Exception as exc:
-        db.session.rollback()
-        return jsonify({"error": "Internal server error", "detail": str(exc)}), 500
+        return jsonify({"error": "Connection error", "detail": str(exc)}), 502
 
 
 @app.route("/api/health")
@@ -112,7 +76,5 @@ def health():
 
 
 if __name__ == "__main__":
-    with app.app_context():
-        db.create_all()
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)

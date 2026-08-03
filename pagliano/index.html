@@ -691,6 +691,35 @@
       color: var(--textm);
       position: relative;
       overflow: hidden;
+<<<<<<< HEAD
+=======
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .about-photo:hover,
+    .about-photo:focus-visible {
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-lg);
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    .about-photo-cta {
+      position: absolute;
+      bottom: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--accent);
+      color: #fff;
+      font-size: 0.85rem;
+      font-weight: 600;
+      padding: 8px 16px;
+      border-radius: 20px;
+      white-space: nowrap;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+      pointer-events: none;
+>>>>>>> a0904bb (fix: CORS for Pagliano LP origin on /api/*; LP photo wired to intake flow)
     }
 
     .about-photo::after {
@@ -1431,7 +1460,13 @@
   <section class="section section-alt" id="chi-sono">
     <div class="container">
       <div class="about-grid">
+<<<<<<< HEAD
         <div class="about-photo">👤</div>
+=======
+        <div class="about-photo" id="aboutPhoto" role="button" tabindex="0" aria-label="Richiedi una consulenza" title="Richiedi una consulenza">
+          <span class="about-photo-cta">Richiedi una consulenza</span>
+        </div>
+>>>>>>> a0904bb (fix: CORS for Pagliano LP origin on /api/*; LP photo wired to intake flow)
         <div class="about-content">
           <span class="label" style="display:inline-block;font-size:0.78rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:0.14em;background:rgba(31,174,114,0.08);padding:6px 16px;border-radius:20px;margin-bottom:14px;">Il Professionista</span>
           <h2>Avv. Diego Pagliano</h2>
@@ -1855,6 +1890,35 @@
       });
     })();
 
+<<<<<<< HEAD
+=======
+    /* ── "Il Professionista" photo → intake flow ─────────────── */
+    // Diego's photo placeholder (id="aboutPhoto") is a clickable entry point
+    // into the intake flow: it scrolls to and focuses the intake form, whose
+    // submission POSTs to /api/intake on the Railway backend. The handler is
+    // bound to the container div, not to any image asset, so swapping in the
+    // real PNG later requires no code change.
+    (function() {
+      var photo = document.getElementById('aboutPhoto');
+      if (!photo) return;
+
+      function triggerIntake() {
+        var form = document.getElementById('contatti');
+        if (form) form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        var first = document.getElementById('fullname');
+        if (first) setTimeout(function() { first.focus({ preventScroll: true }); }, 600);
+      }
+
+      photo.addEventListener('click', triggerIntake);
+      photo.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          triggerIntake();
+        }
+      });
+    })();
+
+>>>>>>> a0904bb (fix: CORS for Pagliano LP origin on /api/*; LP photo wired to intake flow)
     /* ── Modal helpers ─────────────────────────────────────── */
     window.openModal = function(id) {
       var el = document.getElementById(id);
