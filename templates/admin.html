@@ -6,13 +6,13 @@
 <section class="card stack" aria-labelledby="page-title">
     <div class="section">
         <p class="eyebrow">Staff workspace</p>
-        <h1 id="page-title">Matter intake list</h1>
+        <h1 id="page-title">Richieste clienti (intake)</h1>
         <p class="intro">
-            Review new requests, open matter details, update statuses, and prepare demo screenshots.
+            Richieste arrivate dalla landing page (Avv. Diego Pagliano) tramite il modulo "Richiedi una Consulenza".
         </p>
         <div class="actions">
-            <a class="button" href="{{ url_for('index') }}">New intake</a>
-            <form method="POST" action="{{ url_for('load_demo') }}" style="display:inline"><button type="submit" class="button button-secon
+            <a class="button" href="https://verdant-crumble-021449.netlify.app/#contatti">Apri landing page</a>
+            <a class="button button-secondary" href="{{ url_for('logout') }}">Esci</a>
         </div>
     </div>
 
@@ -26,43 +26,105 @@
         {% endif %}
     {% endwith %}
 
-    <div class="table-wrap">
-        <table>
-            <thead>
-                <tr>
-                    <th>#</th>
-                    <th>Client</th>
-                    <th>Email</th>
-                    <th>Practice</th>
-                    <th>Status</th>
-                    <th>Urgency</th>
-                    <th>Created</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% if matters %}
-                    {% for matter in matters %}
-                        <tr>
-                            <td>{{ matter["id"] }}</td>
-                            <td>{{ matter["client_name"] }}</td>
-                            <td>{{ matter["email"] }}</td>
-                            <td>{{ matter["practice_area"] }}</td>
-                            <td><span class="badge">{{ matter["status"] }}</span></td>
-                            <td>{{ matter["urgency"] }}</td>
-                            <td>{{ matter["created_at"] }}</td>
-                            <td>
-                                <a href="{{ url_for('admin_matter', matter_id=matter['id']) }}">Open →</a>
-                            </td>
-                        </tr>
-                    {% endfor %}
-                {% else %}
+    <div class="section">
+        <h2>Intake dalla landing page</h2>
+        <div class="table-wrap">
+            <table>
+                <thead>
                     <tr>
-                        <td colspan="8">No matters yet. Use New intake or Load demo data to start.</td>
+                        <th>#</th>
+                        <th>Nome</th>
+                        <th>Email</th>
+                        <th>Telefono</th>
+                        <th>Area</th>
+                        <th>Priorità</th>
+                        <th>Stato</th>
+                        <th>Fonte</th>
+                        <th>Creato</th>
                     </tr>
-                {% endif %}
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    {% if intakes %}
+                        {% for item in intakes %}
+                            {% set c = item.contact %}
+                            {% if item.cases %}
+                                {% for case in item.cases %}
+                                <tr>
+                                    <td>{{ c.id }}</td>
+                                    <td>{{ c.fullname }}</td>
+                                    <td>{{ c.email }}</td>
+                                    <td>{{ c.phone or '' }}</td>
+                                    <td>{{ case.casetype or '—' }}</td>
+                                    <td><span class="badge">{{ case.priority }}</span></td>
+                                    <td>{{ case.status }}</td>
+                                    <td>{{ c.source }}</td>
+                                    <td>{{ c.created_at }}</td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td>{{ c.id }}</td>
+                                    <td>{{ c.fullname }}</td>
+                                    <td>{{ c.email }}</td>
+                                    <td>{{ c.phone or '' }}</td>
+                                    <td>—</td>
+                                    <td>—</td>
+                                    <td>{{ c.status or 'lead' }}</td>
+                                    <td>{{ c.source }}</td>
+                                    <td>{{ c.created_at }}</td>
+                                </tr>
+                            {% endif %}
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="9">Nessuna richiesta ricevuta ancora dalla landing page.</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>Legacy matters (vecchio flusso /submit)</h2>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Client</th>
+                        <th>Email</th>
+                        <th>Practice</th>
+                        <th>Status</th>
+                        <th>Urgency</th>
+                        <th>Created</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if matters %}
+                        {% for matter in matters %}
+                            <tr>
+                                <td>{{ matter["id"] }}</td>
+                                <td>{{ matter["client_name"] }}</td>
+                                <td>{{ matter["email"] }}</td>
+                                <td>{{ matter["practice_area"] }}</td>
+                                <td><span class="badge">{{ matter["status"] }}</span></td>
+                                <td>{{ matter["urgency"] }}</td>
+                                <td>{{ matter["created_at"] }}</td>
+                                <td>
+                                    <a href="{{ url_for('admin_matter', matter_id=matter['id']) }}">Open →</a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="8">No matters yet. Use New intake or Load demo data to start.</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
     </div>
 </section>
 {% endblock %}

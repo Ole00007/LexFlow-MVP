@@ -192,6 +192,34 @@
       gap: 12px;
     }
 
+    /* Login button */
+    .login-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 40px;
+      padding: 0 18px;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      background: var(--surface);
+      color: var(--text);
+      font-size: 0.82rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.3s;
+      white-space: nowrap;
+    }
+
+    .login-btn:hover {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+      transform: translateY(-1px);
+    }
+
     /* Theme Toggle */
     .theme-toggle {
       width: 40px;
@@ -1335,6 +1363,7 @@
       </ul>
 
       <div class="header-actions">
+        <a class="login-btn" href="https://web-production-ab54f.up.railway.app/" aria-label="Area riservata – Accedi">Login</a>
         <button class="theme-toggle" id="themeToggle" title="Cambia tema" aria-label="Toggle dark/light theme">
           🌙
         </button>

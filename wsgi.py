@@ -5,6 +5,7 @@ from pathlib import Path
 from crm import create_app
 from app import (
     index, submit, status, admin, admin_matter, uploaded_file, load_demo,
+    login, logout,
 )
 
 # ── Create the CRM app (initialises db, migrate, jwt) ────────────────────────
@@ -40,11 +41,34 @@ app.jinja_loader = __import__("jinja2").ChoiceLoader([
 # ── Secret key for flash messages (CRM's Config sets JWT_SECRET_KEY but not Flask's) ──
 app.secret_key = os.environ.get("WEBHOOK_SECRET", "dev-secret-change-me")
 
+# ── Seed admin user from env (idempotent) ─────────────────────────────────────
+# Set ADMIN_EMAIL + ADMIN_PASSWORD on the host to create/keep Diego's account.
+try:
+    with app.app_context():
+        from crm.models.user import User
+        from crm.extensions import db
+        admin_email = os.environ.get("ADMIN_EMAIL", "").strip().lower()
+        admin_password = os.environ.get("ADMIN_PASSWORD", "").strip()
+        if admin_email and admin_password:
+            existing = User.query.filter_by(email=admin_email).first()
+            if not existing:
+                u = User(email=admin_email, role="admin")
+                u.set_password(admin_password)
+                db.session.add(u)
+                db.session.commit()
+                print(f"Seeded admin user: {admin_email}")
+            else:
+                print(f"Admin user exists: {admin_email}")
+except Exception as e:
+    print(f"Admin seed warning: {e}")
+
 # ── Register legacy routes on the CRM app ─────────────────────────────────────
 # Using add_url_rule + explicit endpoint names so route() and view_func() share
 # a single Flask instance but each handler keeps its own function name for
 # url_for() calls inside the legacy templates.
 app.add_url_rule("/", endpoint="index", view_func=index)
+app.add_url_rule("/login", endpoint="login", view_func=login, methods=["GET", "POST"])
+app.add_url_rule("/logout", endpoint="logout", view_func=logout)
 app.add_url_rule("/submit", endpoint="submit", view_func=submit, methods=["POST"])
 app.add_url_rule("/status/<token>", endpoint="status", view_func=status)
 app.add_url_rule("/admin", endpoint="admin", view_func=admin)

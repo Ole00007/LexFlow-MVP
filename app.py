@@ -1,10 +1,11 @@
 import os
 import secrets
 import sqlite3
+from functools import wraps
 from pathlib import Path
 from datetime import datetime
 from flask import (Flask, render_template, request, redirect,
-                   url_for, flash, send_from_directory, abort)
+                   url_for, flash, send_from_directory, abort, session)
 from werkzeug.utils import secure_filename
 
 try:
@@ -118,10 +119,49 @@ def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXT
 
 
+# ── Auth helpers ─────────────────────────────────────────────────────────────
+def login_required(view):
+    """Require an active admin session (set by /login)."""
+    @wraps(view)
+    def wrapped(*args, **kwargs):
+        if not session.get("user_id"):
+            flash("Accedi per visualizzare l'area riservata.", "error")
+            return redirect(url_for("login"))
+        return view(*args, **kwargs)
+    return wrapped
+
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        email = request.form.get("email", "").strip()
+        password = request.form.get("password", "")
+        try:
+            from crm.models.user import User
+            user = User.query.filter_by(email=email).first()
+        except Exception:
+            user = None
+        if user and user.check_password(password):
+            session["user_id"] = user.id
+            session["user_email"] = user.email
+            flash("Accesso effettuato.", "success")
+            return redirect(url_for("admin"))
+        flash("Email o password non validi.", "error")
+        return render_template("login.html"), 401
+    return render_template("login.html")
+
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    flash("Disconnesso.", "info")
+    return redirect(url_for("login"))
+
+
 # ── Routes ────────────────────────────────────────────────────────────────────
 @app.route("/")
 def index():
-    return render_template("index.html", practices=PRACTICES)
+    return redirect(url_for("admin"))
 
 
 @app.route("/submit", methods=["POST"])
@@ -182,13 +222,36 @@ def status(token):
 
 
 @app.route("/admin")
+@login_required
 def admin():
+    # Legacy matters (SQLite) — kept for backward compatibility
     with get_db() as conn:
         matters = conn.execute("SELECT * FROM matters ORDER BY created_at DESC").fetchall()
-    return render_template("admin.html", matters=matters)
+
+    # CRM intake data (contacts + cases) — the real client DB used by /api/intake
+    intakes = []
+    try:
+        from crm.models.contact import Contact
+        from crm.models.case import Case
+        contacts = (Contact.query
+                    .filter_by(is_deleted=False)
+                    .order_by(Contact.created_at.desc())
+                    .limit(200)
+                    .all())
+        for c in contacts:
+            cases = Case.query.filter_by(contactid=c.id).order_by(Case.createdat.desc()).all()
+            intakes.append({
+                "contact": c,
+                "cases": cases,
+            })
+    except Exception as e:
+        print(f"CRM intake query failed: {e}")
+
+    return render_template("admin.html", matters=matters, intakes=intakes)
 
 
 @app.route("/admin/matter/<int:matter_id>", methods=["GET", "POST"])
+@login_required
 def admin_matter(matter_id):
     with get_db() as conn:
         matter = conn.execute("SELECT * FROM matters WHERE id=?", (matter_id,)).fetchone()
@@ -218,6 +281,7 @@ def uploaded_file(filename):
 
 # ── Demo data ─────────────────────────────────────────────────────────────────
 @app.route("/admin/load-demo", methods=["GET", "POST"])
+@login_required
 def load_demo():
     with get_db() as conn:
         existing = conn.execute("SELECT COUNT(*) FROM matters").fetchone()[0]

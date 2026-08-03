@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="it" data-theme="dark">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Login – Studio Pagliano</title>
+    <script>
+        (function () {
+            try {
+                var savedTheme = localStorage.getItem("lexflow-theme") || "dark";
+                document.documentElement.setAttribute("data-theme", savedTheme);
+            } catch (error) {
+                document.documentElement.setAttribute("data-theme", "dark");
+            }
+        })();
+    </script>
+    <style>
+        :root {
+            --background: #0E1117;
+            --surface: #161B27;
+            --surface-2: #111827;
+            --surface-3: #1A2232;
+            --text: #E2E8F0;
+            --muted: #64748B;
+            --muted-2: #94A3B8;
+            --accent: #3B7DD8;
+            --accent-strong: #75A7F0;
+            --accent-soft: rgba(59, 125, 216, 0.14);
+            --success: #10B981;
+            --success-soft: rgba(16, 185, 129, 0.14);
+            --error: #EF4444;
+            --error-soft: rgba(239, 68, 68, 0.15);
+            --border: #1E2A3A;
+            --border-soft: rgba(226, 232, 240, 0.08);
+            --shadow: 0 24px 80px rgba(0, 0, 0, 0.38);
+            --input-bg: #0F1522;
+            --radius-lg: 1rem;
+            --radius-md: 0.75rem;
+        }
+        [data-theme="light"] {
+            --background: #F8FAFC;
+            --surface: #FFFFFF;
+            --surface-2: #F1F5F9;
+            --surface-3: #EAF0F7;
+            --text: #0F172A;
+            --muted: #64748B;
+            --muted-2: #475569;
+            --accent: #1D4ED8;
+            --accent-strong: #1E40AF;
+            --accent-soft: rgba(29, 78, 216, 0.10);
+            --success: #059669;
+            --error: #DC2626;
+            --border: #E2E8F0;
+            --input-bg: #FFFFFF;
+            --shadow: 0 20px 60px rgba(15, 23, 42, 0.10);
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: "Inter", system-ui, -apple-system, sans-serif;
+            color: var(--text);
+            background:
+                radial-gradient(circle at 18% -10%, rgba(59, 125, 216, 0.20), transparent 28rem),
+                radial-gradient(circle at 88% 0%, rgba(124, 92, 252, 0.14), transparent 26rem),
+                var(--background);
+            display: grid;
+            place-items: center;
+            padding: 24px;
+        }
+        .card {
+            width: min(420px, 100%);
+            padding: 40px;
+            background: color-mix(in srgb, var(--surface) 94%, transparent);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow);
+        }
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+            color: var(--text);
+            font-weight: 800;
+            letter-spacing: -0.04em;
+        }
+        .brand-mark {
+            display: grid;
+            place-items: center;
+            width: 38px;
+            height: 38px;
+            color: #ffffff;
+            background: linear-gradient(135deg, var(--accent), #7C5CFC);
+            border-radius: 12px;
+        }
+        .brand small {
+            display: block;
+            margin-top: 2px;
+            color: var(--muted);
+            font-size: 0.7rem;
+            font-weight: 650;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+        h1 {
+            margin: 0 0 8px;
+            font-size: 1.5rem;
+            letter-spacing: -0.03em;
+        }
+        .intro {
+            margin: 0 0 24px;
+            color: var(--muted-2);
+            font-size: 0.9rem;
+        }
+        label {
+            display: inline-block;
+            margin-bottom: 8px;
+            font-size: 0.85rem;
+            font-weight: 700;
+        }
+        input {
+            width: 100%;
+            min-height: 44px;
+            margin-bottom: 16px;
+            padding: 12px;
+            color: var(--text);
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            font: inherit;
+        }
+        input:focus {
+            outline: 2px solid var(--accent);
+            outline-offset: 2px;
+            border-color: var(--accent);
+        }
+        button {
+            width: 100%;
+            min-height: 44px;
+            margin-top: 4px;
+            color: #ffffff;
+            background: var(--accent);
+            border: 1px solid color-mix(in srgb, var(--accent) 80%, #ffffff 10%);
+            border-radius: var(--radius-md);
+            font-size: 0.9rem;
+            font-weight: 750;
+            cursor: pointer;
+            transition: background 180ms ease;
+        }
+        button:hover { background: var(--accent-strong); }
+        .notice {
+            margin: 0 0 16px;
+            padding: 12px 14px;
+            border-radius: var(--radius-md);
+            font-size: 0.85rem;
+        }
+        .notice.success { color: var(--success); background: var(--success-soft); }
+        .notice.error { color: var(--error); background: var(--error-soft); }
+        .notice p { margin: 0; }
+        .back {
+            display: block;
+            margin-top: 20px;
+            text-align: center;
+            color: var(--muted-2);
+            font-size: 0.8rem;
+            text-decoration: none;
+        }
+        .back:hover { color: var(--text); }
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 44px;
+            height: 44px;
+            margin: 0;
+            color: var(--text);
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        .theme-toggle:hover { border-color: var(--accent); }
+    </style>
+</head>
+<body>
+    <button class="theme-toggle" type="button" data-theme-toggle aria-label="Toggle theme">🌙</button>
+
+    <main class="card">
+        <div class="brand">
+            <span class="brand-mark" aria-hidden="true">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                    <path d="M6 4h8.5L19 8.5V20H6V4Z" stroke="currentColor" stroke-width="1.8" />
+                    <path d="M14 4v5h5" stroke="currentColor" stroke-width="1.8" />
+                    <path d="M9 13h6M9 16h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+                </svg>
+            </span>
+            <span>Studio Pagliano<br><small>Area Riservata</small></span>
+        </div>
+
+        <h1>Accedi</h1>
+        <p class="intro">Inserisci le credenziali per gestire le richieste dei clienti.</p>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="notice {{ category }}"><p>{{ message }}</p></div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST" action="{{ url_for('login') }}">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" required autofocus autocomplete="username">
+
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" required autocomplete="current-password">
+
+            <button type="submit">Entra</button>
+        </form>
+
+        <a class="back" href="https://verdant-crumble-021449.netlify.app">← Torna al sito</a>
+    </main>
+
+    <script>
+        (function () {
+            var root = document.documentElement;
+            var toggle = document.querySelector("[data-theme-toggle]");
+            function render(theme) {
+                root.setAttribute("data-theme", theme);
+                if (toggle) toggle.textContent = theme === "dark" ? "☀️" : "🌙";
+            }
+            render(localStorage.getItem("lexflow-theme") || "dark");
+            if (toggle) {
+                toggle.addEventListener("click", function () {
+                    var next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+                    try { localStorage.setItem("lexflow-theme", next); } catch (e) {}
+                    render(next);
+                });
+            }
+        })();
+    </script>
+</body>
+</html>

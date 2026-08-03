@@ -192,6 +192,34 @@
       gap: 12px;
     }
 
+    /* Login button */
+    .login-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 40px;
+      padding: 0 18px;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      background: var(--surface);
+      color: var(--text);
+      font-size: 0.82rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.3s;
+      white-space: nowrap;
+    }
+
+    .login-btn:hover {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+      transform: translateY(-1px);
+    }
+
     /* Theme Toggle */
     .theme-toggle {
       width: 40px;
@@ -691,6 +719,8 @@
       color: var(--textm);
       position: relative;
       overflow: hidden;
+<<<<<<< HEAD
+=======
       cursor: pointer;
       transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
@@ -717,6 +747,7 @@
       white-space: nowrap;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
       pointer-events: none;
+>>>>>>> a0904bb (fix: CORS for Pagliano LP origin on /api/*; LP photo wired to intake flow)
     }
 
     .about-photo::after {
@@ -1332,6 +1363,7 @@
       </ul>
 
       <div class="header-actions">
+        <a class="login-btn" href="https://web-production-ab54f.up.railway.app/" aria-label="Area riservata – Accedi">Login</a>
         <button class="theme-toggle" id="themeToggle" title="Cambia tema" aria-label="Toggle dark/light theme">
           🌙
         </button>
@@ -1457,9 +1489,13 @@
   <section class="section section-alt" id="chi-sono">
     <div class="container">
       <div class="about-grid">
+<<<<<<< HEAD
+        <div class="about-photo">👤</div>
+=======
         <div class="about-photo" id="aboutPhoto" role="button" tabindex="0" aria-label="Richiedi una consulenza" title="Richiedi una consulenza">
           <span class="about-photo-cta">Richiedi una consulenza</span>
         </div>
+>>>>>>> a0904bb (fix: CORS for Pagliano LP origin on /api/*; LP photo wired to intake flow)
         <div class="about-content">
           <span class="label" style="display:inline-block;font-size:0.78rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:0.14em;background:rgba(31,174,114,0.08);padding:6px 16px;border-radius:20px;margin-bottom:14px;">Il Professionista</span>
           <h2>Avv. Diego Pagliano</h2>
@@ -1883,6 +1919,8 @@
       });
     })();
 
+<<<<<<< HEAD
+=======
     /* ── "Il Professionista" photo → intake flow ─────────────── */
     // Diego's photo placeholder (id="aboutPhoto") is a clickable entry point
     // into the intake flow: it scrolls to and focuses the intake form, whose
@@ -1909,6 +1947,7 @@
       });
     })();
 
+>>>>>>> a0904bb (fix: CORS for Pagliano LP origin on /api/*; LP photo wired to intake flow)
     /* ── Modal helpers ─────────────────────────────────────── */
     window.openModal = function(id) {
       var el = document.getElementById(id);
