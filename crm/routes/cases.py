@@ -160,3 +160,75 @@ def delete_case(case_id):
     db.session.delete(case)
     db.session.commit()
     return jsonify({"message": "Case deleted"}), 200
+
+
+@cases_bp.patch("/cases/bulk-update")
+@jwt_required()
+def bulk_update_cases():
+    """Bulk update cases (e.g. move multiple to same status on Kanban).
+    Payload: {"case_ids": [1,2,3], "status": "Active", "priority": "high"}
+    Returns: {"updated": 2, "failed": 1, "errors": [...]}
+    """
+    data = request.get_json()
+
+    if not data or not data.get("case_ids"):
+        return jsonify({"error": "case_ids array is required"}), 400
+
+    case_ids = data.get("case_ids")
+    if not isinstance(case_ids, list):
+        return jsonify({"error": "case_ids must be an array"}), 400
+
+    updates = {}
+    if "status" in data:
+        new_status = data["status"]
+        if new_status in VALID_CASE_STATUSES:
+            updates["status"] = new_status
+        else:
+            return jsonify({"error": f"status must be one of {VALID_CASE_STATUSES}"}), 400
+
+    if "priority" in data:
+        priority = data["priority"].lower()
+        if priority in VALID_PRIORITIES:
+            updates["priority"] = priority
+        else:
+            return jsonify({"error": f"priority must be one of {VALID_PRIORITIES}"}), 400
+
+    if not updates:
+        return jsonify({"error": "At least one field required (status, priority)"}), 400
+
+    updated = 0
+    errors = []
+    old_statuses = {}  # track for notifications
+
+    for case_id in case_ids:
+        case = Case.query.get(case_id)
+        if not case:
+            errors.append({"id": case_id, "error": "Case not found"})
+            continue
+
+        if "status" in updates:
+            old_statuses[case_id] = case.status
+            case.status = updates["status"]
+        if "priority" in updates:
+            case.priority = updates["priority"]
+
+        updated += 1
+
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": f"Database error: {str(e)}"}), 500
+
+    # Fire status-change notifications for affected contacts
+    for cid, old_s in old_statuses.items():
+        case = Case.query.get(cid)
+        if case and case.status != old_s:
+            try:
+                contact = Contact.query.get(case.contactid)
+                if contact:
+                    notify_case_status_changed(contact, case, old_s, case.status)
+            except Exception:
+                pass
+
+    return jsonify({"updated": updated, "failed": len(errors), "errors": errors}), 200

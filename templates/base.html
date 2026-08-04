@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{% block title %}LexFlow – Legal Intake & Status Suite{% endblock %}</title>
+    <title>{% block title %}aLEXy – Legal Intake & CRM{% endblock %}</title>
     <script>
         (function () {
             try {
@@ -727,7 +727,7 @@
     <a class="skip-link" href="#main-content">Skip to content</a>
     <div class="shell">
         <aside class="sidebar" aria-label="LexFlow workspace navigation">
-            <a class="brand" href="{{ url_for('index') }}" aria-label="LexFlow home">
+            <a class="brand" href="{{ url_for('dashboard_view') }}" aria-label="aLEXy home">
                 <span class="brand-mark" aria-hidden="true">
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
                         <path d="M6 4h8.5L19 8.5V20H6V4Z" stroke="currentColor" stroke-width="1.8" />
@@ -736,15 +736,22 @@
                     </svg>
                 </span>
                 <span class="brand-copy">
-                    LexFlow
-                    <small>Legal Intake</small>
+                    aLEXy
+                    <small>Legal CRM</small>
                 </span>
             </a>
 
             <p class="nav-label">Workspace</p>
             <ul class="nav-list">
-                <li><a class="nav-link" href="{{ url_for('index') }}">New intake <span class="nav-dot" aria-hidden="true"></span></a></li>
+                <li><a class="nav-link" href="{{ url_for('dashboard_view') }}">Dashboard</a></li>
+                <li><a class="nav-link" href="{{ url_for('kanban_view') }}">Kanban Board</a></li>
                 <li><a class="nav-link" href="{{ url_for('admin') }}">Staff matters</a></li>
+                <li><a class="nav-link" href="{{ url_for('index') }}">New intake <span class="nav-dot" aria-hidden="true"></span></a></li>
+            </ul>
+
+            <p class="nav-label">CRM Data</p>
+            <ul class="nav-list">
+                <li><a class="nav-link" href="{{ url_for('admin') }}">All Contacts</a></li>
                 <li><a class="nav-link" href="{{ url_for('load_demo') }}">Demo data</a></li>
             </ul>
 
@@ -756,7 +763,7 @@
 
         <div class="workspace">
             <header class="topbar">
-                <div class="breadcrumb">LexFlow / Confidential workflow suite</div>
+                <div class="breadcrumb">aLEXy / Legal CRM workspace</div>
                 <div class="topbar-actions">
                     <button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch to light mode">
                         <svg data-theme-icon width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">

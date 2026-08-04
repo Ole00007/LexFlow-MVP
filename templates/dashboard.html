@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard — aLEXy{% endblock %}
+
+{% block content %}
+<section class="card stack" aria-labelledby="page-title">
+    <div class="section">
+        <p class="eyebrow">Admin workspace</p>
+        <h1 id="page-title">Dashboard</h1>
+        <p class="intro">
+            Legal intake and case management overview. Real-time stats from your database.
+        </p>
+        <div class="actions">
+            <a class="button" href="{{ url_for('kanban_view') }}">Kanban Board</a>
+            <a class="button button-secondary" href="{{ url_for('admin') }}">Matter List</a>
+            <a class="button button-secondary" href="{{ url_for('logout') }}">Logout</a>
+        </div>
+    </div>
+
+    <!-- Stats grid -->
+    <div class="grid" style="grid-template-columns: repeat(4, minmax(0, 1fr))">
+        <div class="feature" id="stat-contacts">
+            <h3>Contacts</h3>
+            <p class="stat-value" style="font-size: 2.5rem; font-weight: 800; color: var(--accent-strong);">—</p>
+        </div>
+        <div class="feature" id="stat-cases">
+            <h3>Cases</h3>
+            <p class="stat-value" style="font-size: 2.5rem; font-weight: 800; color: var(--violet);">—</p>
+        </div>
+        <div class="feature" id="stat-tasks">
+            <h3>Tasks</h3>
+            <p class="stat-value" style="font-size: 2.5rem; font-weight: 800; color: var(--success);">—</p>
+        </div>
+        <div class="feature" id="stat-pending">
+            <h3>Pending Tasks</h3>
+            <p class="stat-value" style="font-size: 2.5rem; font-weight: 800; color: var(--warning);">—</p>
+        </div>
+    </div>
+
+    <!-- Case status breakdown -->
+    <div class="section">
+        <h2>Cases by Status</h2>
+        <div id="case-statuses" class="stack" style="gap: 0.5rem;">
+            <p style="color: var(--muted);">Loading...</p>
+        </div>
+    </div>
+
+    <!-- Recent activity -->
+    <div class="section">
+        <h2>Recent Contacts</h2>
+        <div class="table-wrap">
+            <table id="recent-contacts-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Company</th>
+                        <th>Status</th>
+                        <th>Source</th>
+                        <th>Created</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td colspan="7">Loading...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Quick links -->
+    <div class="section">
+        <h2>Quick Actions</h2>
+        <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+            <a class="button" href="{{ url_for('kanban_view') }}">Open Kanban Board</a>
+            <a class="button button-secondary" href="/api/tasks/export.csv" download>Export Tasks (CSV)</a>
+            <a class="button button-secondary" href="{{ url_for('admin') }}">Admin Dashboard</a>
+        </div>
+    </div>
+</section>
+
+<script>
+async function getToken() {
+    const stored = localStorage.getItem('jwt');
+    if (stored) return stored;
+    try {
+        const res = await fetch('/api/token');
+        if (res.ok) {
+            const data = await res.json();
+            localStorage.setItem('jwt', data.access_token);
+            return data.access_token;
+        }
+    } catch (e) {
+        console.error('Token fetch failed:', e);
+    }
+    return localStorage.getItem('jwt') || '';
+}
+
+async function loadStats() {
+    const token = await getToken();
+    if (!token) {
+        document.getElementById('stat-contacts').innerHTML = '<h3>Contacts</h3><p style="color: var(--error);">Login required</p>';
+        return;
+    }
+
+    const headers = { 'Authorization': `Bearer ${token}` };
+
+    // Load contacts count
+    try {
+        const contactsRes = await fetch('/api/contacts', { headers });
+        if (contactsRes.ok) {
+            const contacts = await contactsRes.json();
+            document.getElementById('stat-contacts').querySelector('.stat-value').textContent = contacts.length || 0;
+        }
+    } catch (e) {
+        console.error('Contacts load failed:', e);
+    }
+
+    // Load cases count and status breakdown
+    try {
+        const casesRes = await fetch('/api/cases?page=1&per_page=1', { headers });
+        if (casesRes.ok) {
+            const casesData = await casesRes.json();
+            const totalCases = casesData.total || 0;
+            document.getElementById('stat-cases').querySelector('.stat-value').textContent = totalCases;
+
+            // Status breakdown
+            const casesListRes = await fetch('/api/cases?page=1&per_page=100', { headers });
+            if (casesListRes.ok) {
+                const allCases = (await casesListRes.json()).items || [];
+                const statusCounts = {};
+                allCases.forEach(c => {
+                    statusCounts[c.status] = (statusCounts[c.status] || 0) + 1;
+                });
+
+                const container = document.getElementById('case-statuses');
+                container.innerHTML = '';
+                for (const [status, count] of Object.entries(statusCounts).sort((a,b) => b[1] - a[1])) {
+                    const pct = totalCases ? (count / totalCases * 100).toFixed(0) : 0;
+                    container.innerHTML += `
+                        <div style="display: flex; align-items: center; gap: 1rem;">
+                            <span style="min-width: 140px; font-weight: 600;">${status}</span>
+                            <div style="flex: 1; height: 20px; background: var(--surface-3); border-radius: 10px; overflow: hidden;">
+                                <div style="width: ${pct}%; height: 100%; background: var(--accent); border-radius: 10px; transition: width 0.5s;"></div>
+                            </div>
+                            <span style="min-width: 60px; text-align: right; color: var(--muted);">${count} (${pct}%)</span>
+                        </div>
+                    `;
+                }
+                if (!Object.keys(statusCounts).length) {
+                    container.innerHTML = '<p style="color: var(--muted);">No cases found</p>';
+                }
+            }
+        }
+    } catch (e) {
+        console.error('Cases load failed:', e);
+    }
+
+    // Load tasks count
+    try {
+        const tasksRes = await fetch('/api/tasks?page=1&per_page=1', { headers });
+        if (tasksRes.ok) {
+            const tasksData = await tasksRes.json();
+            document.getElementById('stat-tasks').querySelector('.stat-value').textContent = tasksData.total || 0;
+        }
+    } catch (e) {
+        console.error('Tasks load failed:', e);
+    }
+
+    // Load pending tasks count
+    try {
+        const pendingRes = await fetch('/api/tasks?status=pending&page=1&per_page=1', { headers });
+        if (pendingRes.ok) {
+            const pendingData = await pendingRes.json();
+            document.getElementById('stat-pending').querySelector('.stat-value').textContent = pendingData.total || 0;
+        }
+    } catch (e) {
+        console.error('Pending tasks load failed:', e);
+    }
+
+    // Load recent contacts
+    try {
+        const contactsRes = await fetch('/api/contacts', { headers });
+        if (contactsRes.ok) {
+            const contacts = await contactsRes.json();
+            const tbody = document.querySelector('#recent-contacts-table tbody');
+            const recent = contacts.slice(0, 10);
+            if (!recent.length) {
+                tbody.innerHTML = '<tr><td colspan="7">No contacts yet</td></tr>';
+            } else {
+                tbody.innerHTML = recent.map(c => `
+                    <tr>
+                        <td>${c.id}</td>
+                        <td>${c.fullname || '—'}</td>
+                        <td>${c.email || '—'}</td>
+                        <td>${c.company || '—'}</td>
+                        <td><span class="badge" style="background: var(--accent-soft); color: var(--accent-strong);">${c.status || 'lead'}</span></td>
+                        <td>${c.source}</td>
+                        <td>${c.created_at ? c.created_at.slice(0,10) : '—'}</td>
+                    </tr>
+                `).join('');
+            }
+        }
+    } catch (e) {
+        console.error('Recent contacts load failed:', e);
+        document.querySelector('#recent-contacts-table tbody').innerHTML = '<tr><td colspan="7">Failed to load</td></tr>';
+    }
+}
+
+document.addEventListener('DOMContentLoaded', loadStats);
+</script>
+{% endblock %}

@@ -5,7 +5,8 @@ from functools import wraps
 from pathlib import Path
 from datetime import datetime
 from flask import (Flask, render_template, request, redirect,
-                   url_for, flash, send_from_directory, abort, session)
+                   url_for, flash, send_from_directory, abort, session,
+                   jsonify)
 from werkzeug.utils import secure_filename
 
 try:
@@ -308,6 +309,39 @@ def load_demo():
         conn.commit()
     flash("Demo data loaded.", "success")
     return redirect(url_for("admin"))
+
+
+# ── Kanban & Dashboard ──────────────────────────────────────────────────────────
+
+@app.route("/kanban")
+@login_required
+def kanban_view():
+    return render_template("kanban.html")
+
+
+@app.route("/dashboard")
+@login_required
+def dashboard_view():
+    return render_template("dashboard.html")
+
+
+@app.route("/api/token")
+@login_required
+def api_token():
+    """Exchange a logged-in session for a JWT token to use with CRM API calls."""
+    user_id = session.get("user_id")
+    if not user_id:
+        return jsonify({"error": "Not authenticated"}), 401
+    try:
+        from crm.models.user import User
+        from flask_jwt_extended import create_access_token
+        user = User.query.get(int(user_id))
+        if not user:
+            return jsonify({"error": "User not found"}), 404
+        access_token = create_access_token(identity=str(user.id))
+        return jsonify({"access_token": access_token, "user": user.to_dict()}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 if __name__ == "__main__":

@@ -5,7 +5,7 @@ from pathlib import Path
 from crm import create_app
 from app import (
     index, submit, status, admin, admin_matter, uploaded_file, load_demo,
-    login, logout,
+    login, logout, api_token, kanban_view, dashboard_view,
 )
 
 # ── Create the CRM app (initialises db, migrate, jwt) ────────────────────────
@@ -104,6 +104,9 @@ app.add_url_rule(
     view_func=load_demo,
     methods=["GET", "POST"],
 )
+app.add_url_rule("/kanban", endpoint="kanban_view", view_func=kanban_view)
+app.add_url_rule("/dashboard", endpoint="dashboard_view", view_func=dashboard_view)
+app.add_url_rule("/api/token", endpoint="api_token", view_func=api_token)
 
 # ── Entry point for gunicorn + local dev ──────────────────────────────────────
 if __name__ == "__main__":
