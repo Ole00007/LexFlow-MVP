@@ -17,6 +17,10 @@ from ..services.notifications import (
     notify_case_intake,
     notify_case_status_changed,
 )
+from ..services.calendar import (
+    create_or_update_calendar_event,
+    delete_calendar_event,
+)
 
 appointments_bp = Blueprint("appointments", __name__, url_prefix="/api/appointments")
 
@@ -25,6 +29,7 @@ VALID_APPOINTMENT_STATUSES = ["Requested", "Confirmed", "Cancelled"]
 
 
 @appointments_bp.get("/")
+@appointments_bp.get("")
 @jwt_required()
 def list_appointments():
     """List all appointments (admin only)."""
@@ -37,6 +42,7 @@ def list_appointments():
 
 
 @appointments_bp.post("/")
+@appointments_bp.post("")
 def create_appointment():
     """Public endpoint — any visitor can book an appointment.
 
@@ -99,12 +105,15 @@ def create_appointment():
     else:
         case = None
 
+    description = (data.get("description") or "").strip() or None
+    location = (data.get("location") or "").strip() or None
+
     event = Event(
         title=title,
-        description=(data.get("description") or "").strip() or None,
+        description=description,
         event_date=event_date,
         event_type="appointment",
-        location=(data.get("location") or "").strip() or None,
+        location=location,
     )
     db.session.add(event)
     db.session.flush()
@@ -115,6 +124,21 @@ def create_appointment():
     except Exception:
         db.session.rollback()
         return jsonify({"error": "Failed to create appointment"}), 500
+
+    # ── Sync to Google Calendar (non-blocking; mock until credentials set) ──
+    try:
+        cal_result = create_or_update_calendar_event(
+            title=title,
+            description=f"{description or ''} — Richiesto da {fullname} ({email})",
+            due_date=event_date,
+            event_type="appointment",
+            location=location or "Telefono",
+        )
+        if cal_result.get("event_id") and not cal_result.get("mock"):
+            event.google_event_id = cal_result["event_id"]
+            db.session.commit()
+    except Exception:
+        db.session.rollback()  # calendar sync must never break the booking
 
     # Notify team
     try:
@@ -172,6 +196,14 @@ def cancel_appointment(event_id):
 
     old_type = event.event_type
     event.event_type = "cancelled_appointment"
+
+    # Remove from Google Calendar if it was synced
+    if event.google_event_id:
+        try:
+            delete_calendar_event(event.google_event_id)
+        except Exception:
+            pass
+        event.google_event_id = None
 
     # Notify
     try:

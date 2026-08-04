@@ -15,8 +15,12 @@ def create_app():
             "origins": [
                 "https://verdant-crumble-021449.netlify.app",
                 "https://*.netlify.app",
+                "http://localhost:5000",
+                "http://127.0.0.1:5000",
+                "http://localhost:8877",
+                "http://127.0.0.1:8877",
             ],
-            "methods": ["GET", "POST", "OPTIONS"],
+            "methods": ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
             "allow_headers": ["Content-Type", "Authorization"],
         }
     })
@@ -43,7 +47,7 @@ def create_app():
     app.register_blueprint(kanban_bp, url_prefix="/api")
     app.register_blueprint(notifications_bp, url_prefix="/api")
     app.register_blueprint(intake_bp, url_prefix="/api/intake")
-    app.register_blueprint(appointments_bp, url_prefix="/api")
+    app.register_blueprint(appointments_bp)
 
     @app.errorhandler(400)
     def bad_request(error):

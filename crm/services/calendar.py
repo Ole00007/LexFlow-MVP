@@ -16,6 +16,13 @@ CALENDAR_READY = False
 calendar_service = None
 
 
+def _rfc3339(dt: datetime) -> str:
+    """Format a datetime as RFC3339 (Google Calendar requires a timezone offset)."""
+    if dt.tzinfo is None:
+        return dt.isoformat() + "Z"
+    return dt.isoformat()
+
+
 def initialize_calendar_service():
     """Initialize Google Calendar service with OAuth2 credentials.
     
@@ -96,11 +103,11 @@ def create_or_update_calendar_event(
         'summary': title,
         'description': description or '',
         'start': {
-            'dateTime': due_date.isoformat(),
+            'dateTime': _rfc3339(due_date),
             'timeZone': 'UTC'
         },
         'end': {
-            'dateTime': due_date.isoformat(),
+            'dateTime': _rfc3339(due_date),
             'timeZone': 'UTC'
         }
     }
