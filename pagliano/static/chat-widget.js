@@ -301,7 +301,7 @@
       source: "pagliano_chatbot",
     };
 
-    fetch("https://web-production-ab54f.up.railway.app/api/appointments", {
+    fetch("https://web-production-031a6.up.railway.app/api/appointments", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
