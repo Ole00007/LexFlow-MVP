@@ -41,6 +41,14 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
 
+  <!-- Favicons — navy/gold/emerald monogram -->
+  <link rel="icon" type="image/svg+xml" href="static/favicon.svg?v=2">
+  <link rel="icon" type="image/png" sizes="32x32" href="static/favicon-32.png?v=2">
+  <link rel="icon" type="image/png" sizes="16x16" href="static/favicon-16.png?v=2">
+  <link rel="apple-touch-icon" sizes="180x180" href="static/favicon-180.png?v=2">
+  <meta name="theme-color" content="#0E2A47">
+
+
   <style>
     /* ═══════════════════════════════════════════════════════════
        CSS Custom Properties — Light Theme (default)
@@ -55,8 +63,8 @@
       --primary: #0E2A47;
       --primary-light: #1A3F6B;
       --primary-dark: #081B2F;
-      --accent: #1FAE72;
-      --accent-hover: #189960;
+      --accent: #698269;
+      --accent-hover: #57734F;
       --border: #E2E6EB;
       --shadow: 0 2px 12px rgba(14,42,71,0.08);
       --shadow-lg: 0 8px 30px rgba(14,42,71,0.12);
@@ -108,6 +116,30 @@
     a:hover { color: var(--accent); }
 
     img { max-width: 100%; display: block; }
+
+    /* ═══════════════════════════════════════════════════════════
+       Elegant line icons (replace emoji) — stroke-based, inherit color
+       ═══════════════════════════════════════════════════════════ */
+    .ico {
+      display: inline-block;
+      flex-shrink: 0;
+      vertical-align: middle;
+    }
+    .trust-icon svg { width: 22px; height: 22px; }
+    .area-icon { color: var(--accent); }
+    .area-icon svg { width: 26px; height: 26px; }
+    .blog-thumb svg { width: 42px; height: 42px; color: var(--primary); }
+    .credential .icon svg { width: 14px; height: 14px; }
+    .contact-ico { width: 15px; height: 15px; color: var(--accent); margin-right: 4px; }
+    .btn-ico { width: 16px; height: 16px; }
+    .success-modal .check-icon svg { width: 30px; height: 30px; color: var(--accent); }
+    .avatar-monogram {
+      font-family: var(--font-serif);
+      font-weight: 700;
+      font-size: 2.4rem;
+      letter-spacing: -0.02em;
+      color: #D4AF37;
+    }
 
     .container {
       width: 100%;
@@ -273,23 +305,28 @@
       transform: rotate(-45deg) translate(5px, -5px);
     }
 
-    /* Mobile Nav */
+    /* Mobile Nav — right-side drawer, anchored below the header, never overlaps it */
     @media (max-width: 700px) {
       .hamburger { display: flex; }
 
       .nav-links {
         position: fixed;
-        top: var(--nav-h);
-        left: 0;
-        right: 0;
-        bottom: 0;
+        top: calc(var(--nav-h) + 8px);
+        right: 12px;
+        width: min(78vw, 300px);
+        max-height: calc(100vh - var(--nav-h) - 24px);
+        overflow-y: auto;
         background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow-lg);
         flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: 28px;
-        transform: translateX(100%);
-        transition: transform 0.35s ease;
+        align-items: stretch;
+        justify-content: flex-start;
+        gap: 4px;
+        padding: 12px;
+        transform: translateX(calc(100% + 24px));
+        transition: transform 0.3s ease;
         z-index: 999;
       }
 
@@ -298,8 +335,30 @@
       }
 
       .nav-links a {
-        font-size: 1.2rem;
+        font-size: 1.05rem;
+        padding: 12px 14px;
+        border-radius: var(--radius-sm);
+        text-align: right;
+        color: var(--text);
       }
+
+      .nav-links a:hover,
+      .nav-links a.active {
+        background: var(--surface-alt);
+        color: var(--primary);
+      }
+
+      .nav-links a::after {
+        display: none; /* underline indicator doesn't suit a drawer */
+      }
+    }
+
+    /* Very narrow screens — keep the header row from cramping */
+    @media (max-width: 480px) {
+      .logo { font-size: 1.02rem; }
+      .header-actions { gap: 8px; }
+      .login-btn { padding: 0 12px; height: 36px; font-size: 0.74rem; }
+      .theme-toggle { width: 36px; height: 36px; font-size: 1rem; }
     }
 
     /* ═══════════════════════════════════════════════════════════
@@ -322,8 +381,45 @@
       right: -20%;
       width: 600px;
       height: 600px;
-      background: radial-gradient(circle, rgba(31,174,114,0.08) 0%, transparent 70%);
+      background: radial-gradient(circle, rgba(105,130,105,0.08) 0%, transparent 70%);
       border-radius: 50%;
+      z-index: 1;
+    }
+
+    /* Hero underlayer background — elegant law office interior (photo).
+       Slow ken-burns pan/zoom keeps it alive without distracting the copy. */
+    .hero-bg {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      background-image: url('static/hero-bg.png');
+      background-size: cover;
+      background-position: center;
+      transform-origin: center;
+      will-change: transform;
+      animation: hero-kenburns 30s ease-in-out infinite alternate;
+    }
+
+    /* Soft navy scrim so the white hero text stays readable over the photo —
+       darker on the left where the text sits, lighter on the right. */
+    .hero-bg::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(100deg, rgba(14,42,71,0.74) 0%, rgba(26,63,107,0.48) 45%, rgba(14,42,71,0.58) 100%);
+    }
+
+    /* Subtle slow ken-burns zoom/pan on the header photo */
+    @keyframes hero-kenburns {
+      0%   { transform: scale(1) translate(0, 0); }
+      50%  { transform: scale(1.06) translate(-1%, -0.8%); }
+      100% { transform: scale(1.12) translate(1%, -1.2%); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .hero-bg {
+        animation: none;
+      }
     }
 
     .hero .container {
@@ -393,7 +489,7 @@
     .btn-primary:hover {
       background: var(--accent-hover);
       transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(31,174,114,0.35);
+      box-shadow: 0 6px 20px rgba(105,130,105,0.35);
       color: #fff;
     }
 
@@ -431,7 +527,7 @@
       position: absolute;
       inset: -8px;
       border-radius: 50%;
-      border: 2px dashed rgba(31,174,114,0.3);
+      border: 2px dashed rgba(105,130,105,0.3);
       animation: rotate-dash 20s linear infinite;
     }
 
@@ -445,7 +541,7 @@
       width: 100%;
       height: 100%;
       border-radius: 50%;
-      background: linear-gradient(135deg, rgba(31,174,114,0.1), rgba(14,42,71,0.2));
+      background: linear-gradient(135deg, rgba(105,130,105,0.1), rgba(14,42,71,0.2));
       display: flex;
       align-items: center;
       justify-content: center;
@@ -582,7 +678,7 @@
       color: var(--accent);
       text-transform: uppercase;
       letter-spacing: 0.14em;
-      background: rgba(31,174,114,0.08);
+      background: rgba(105,130,105,0.08);
       padding: 6px 16px;
       border-radius: 20px;
       margin-bottom: 14px;
@@ -648,7 +744,7 @@
       width: 52px;
       height: 52px;
       border-radius: var(--radius-sm);
-      background: rgba(31,174,114,0.1);
+      background: rgba(105,130,105,0.1);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -657,9 +753,9 @@
     }
 
     .area-card h3 {
-      font-family: var(--font-serif);
-      font-size: 1.15rem;
-      font-weight: 600;
+      font-family: var(--font-sans);
+      font-size: 1.1rem;
+      font-weight: 650;
       margin-bottom: 10px;
       color: var(--text);
     }
@@ -719,8 +815,6 @@
       color: var(--textm);
       position: relative;
       overflow: hidden;
-<<<<<<< HEAD
-=======
       cursor: pointer;
       transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
@@ -747,14 +841,18 @@
       white-space: nowrap;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
       pointer-events: none;
->>>>>>> a0904bb (fix: CORS for Pagliano LP origin on /api/*; LP photo wired to intake flow)
     }
 
     .about-photo::after {
-      content: '📷';
+      content: 'DP';
       position: absolute;
-      font-size: 2rem;
-      bottom: 20px;
+      font-family: var(--font-serif);
+      font-weight: 700;
+      font-size: 3.2rem;
+      letter-spacing: -0.02em;
+      color: rgba(212,175,55,0.85);
+      text-shadow: 0 2px 10px rgba(0,0,0,0.35);
+      bottom: 26px;
     }
 
     .about-content h2 {
@@ -863,7 +961,7 @@
     .form-group textarea:focus,
     .form-group select:focus {
       border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(31,174,114,0.12);
+      box-shadow: 0 0 0 3px rgba(105,130,105,0.12);
     }
 
     .form-group textarea {
@@ -917,7 +1015,7 @@
     .submit-btn:hover {
       background: var(--accent-hover);
       transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(31,174,114,0.3);
+      box-shadow: 0 6px 20px rgba(105,130,105,0.3);
     }
 
     .submit-btn:disabled {
@@ -937,9 +1035,9 @@
 
     .form-status.success {
       display: block;
-      background: rgba(31,174,114,0.1);
-      color: #1FAE72;
-      border: 1px solid rgba(31,174,114,0.25);
+      background: rgba(105,130,105,0.1);
+      color: #698269;
+      border: 1px solid rgba(105,130,105,0.25);
     }
 
     .form-status.error {
@@ -977,13 +1075,83 @@
     }
 
     .blog-thumb {
+      position: relative;
       height: 180px;
+      overflow: hidden;
       background: var(--surface-alt);
-      display: flex;
+    }
+
+    .blog-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transform-origin: center;
+      will-change: transform;
+      animation: blog-kenburns 18s ease-in-out infinite alternate;
+    }
+
+    .blog-card:hover .blog-thumb img {
+      animation-duration: 7s;
+    }
+
+    @keyframes blog-kenburns {
+      0%   { transform: scale(1) translate(0, 0); }
+      100% { transform: scale(1.12) translate(-1.2%, 1%); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .blog-thumb img { animation: none; }
+    }
+
+    /* Blog "Leggi di più" dropdown / accordion */
+    .blog-more {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.45s ease, margin 0.45s ease;
+    }
+
+    .blog-more.open {
+      max-height: 560px;
+      margin-top: 12px;
+    }
+
+    .blog-more p {
+      font-size: 0.88rem;
+      color: var(--textc);
+      line-height: 1.75;
+      border-top: 1px solid var(--border);
+      padding-top: 12px;
+    }
+    .about-more .about-credentials {
+      margin-top: 16px;
+    }
+
+    .blog-read-more {
+      display: inline-flex;
       align-items: center;
-      justify-content: center;
-      font-size: 2.5rem;
-      color: var(--textm);
+      gap: 6px;
+      margin-top: 14px;
+      background: none;
+      border: none;
+      padding: 0;
+      font-family: inherit;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--accent);
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+
+    .blog-read-more:hover { color: var(--primary); }
+
+    .blog-read-more .chev {
+      display: inline-block;
+      transition: transform 0.3s;
+    }
+
+    .blog-read-more[aria-expanded="true"] .chev {
+      transform: rotate(180deg);
     }
 
     .blog-body {
@@ -998,9 +1166,9 @@
     }
 
     .blog-body h3 {
-      font-family: var(--font-serif);
-      font-size: 1.08rem;
-      font-weight: 600;
+      font-family: var(--font-sans);
+      font-size: 1.06rem;
+      font-weight: 650;
       margin-bottom: 8px;
       color: var(--text);
     }
@@ -1104,7 +1272,7 @@
       font-size: 1.6rem;
       border: none;
       cursor: pointer;
-      box-shadow: 0 4px 20px rgba(31,174,114,0.4);
+      box-shadow: 0 4px 20px rgba(105,130,105,0.4);
       z-index: 2000;
       display: flex;
       align-items: center;
@@ -1114,7 +1282,7 @@
 
     #chat-toggle-btn:hover {
       transform: scale(1.08);
-      box-shadow: 0 6px 28px rgba(31,174,114,0.5);
+      box-shadow: 0 6px 28px rgba(105,130,105,0.5);
     }
 
     #chat-panel {
@@ -1188,6 +1356,17 @@
     }
 
     #chat-close-btn:hover { color: #fff; }
+
+    #chat-toggle-btn img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+    #chat-panel-header .chat-id { display: flex; align-items: center; gap: 10px; }
+    .chat-header-avatar { width: 38px; height: 38px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(212,175,55,0.9); flex-shrink: 0; }
+    #chat-panel-header .subtitle { display: block; font-size: 0.72rem; color: rgba(255,255,255,0.75); font-weight: 400; margin-top: 1px; line-height: 1.3; }
+    .chat-row { display: flex; align-items: flex-end; gap: 8px; width: 100%; }
+    .chat-row.bot { justify-content: flex-start; }
+    .chat-row.user { justify-content: flex-end; }
+    .chat-avatar-mini { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; border: 2px solid var(--accent); flex-shrink: 0; box-shadow: 0 2px 6px rgba(0,0,0,0.15); }
+    .chat-row .chat-msg { max-width: calc(100% - 40px); }
+    .chat-options { margin-left: 36px; }
 
     #chat-messages {
       flex: 1;
@@ -1320,7 +1499,7 @@
       width: 64px;
       height: 64px;
       border-radius: 50%;
-      background: rgba(31,174,114,0.12);
+      background: rgba(105,130,105,0.12);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -1363,7 +1542,7 @@
       </ul>
 
       <div class="header-actions">
-        <a class="login-btn" href="https://web-production-ab54f.up.railway.app/" aria-label="Area riservata – Accedi">Login</a>
+        <a class="login-btn" href="https://web-production-031a6.up.railway.app/kanban" aria-label="Area riservata – Accedi">Login</a>
         <button class="theme-toggle" id="themeToggle" title="Cambia tema" aria-label="Toggle dark/light theme">
           🌙
         </button>
@@ -1378,6 +1557,7 @@
 
   <!-- ═══════════════ HERO ═══════════════ -->
   <section class="hero" id="home">
+    <div class="hero-bg" aria-hidden="true"></div>
     <div class="container">
       <div class="hero-text">
         <div class="eyebrow">Studio Legale — Genova</div>
@@ -1385,11 +1565,11 @@
         <p>Specializzato in diritto di famiglia, recupero crediti ed esecuzioni immobiliari. Area Liguria e Basso Piemonte.</p>
         <div class="hero-ctas">
           <a href="#contatti" class="btn btn-primary">Richiedi una consulenza</a>
-          <a href="tel:+393805279810" class="btn btn-outline">📞 Chiama ora</a>
+          <a href="tel:+393805279810" class="btn btn-outline"><svg class="ico btn-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 2 .7 2.9a2 2 0 0 1-.5 2.1L8 10a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5c.9.3 1.9.6 2.9.7a2 2 0 0 1 1.7 2z"/></svg> Chiama ora</a>
         </div>
       </div>
       <div class="hero-avatar">
-        <div class="hero-avatar-inner">👨‍⚖️</div>
+        <div class="hero-avatar-inner"><span class="avatar-monogram">DP</span></div>
         <!-- VIDEO PLACEHOLDER: Uncomment and add src when real video/animated photo is ready -->
         <!-- <video autoplay muted loop playsinline>
           <source src="path/to/avatar-video.mp4" type="video/mp4">
@@ -1404,19 +1584,19 @@
     <div class="container">
       <div class="trust-items">
         <div class="trust-item">
-          <div class="trust-icon">⚖️</div>
+          <div class="trust-icon"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.5v18"/><path d="M9 20.5h6"/><path d="M4 7h16"/><path d="M4 7l-1.6 3.8a2.6 2.6 0 0 0 5.2 0L6 7"/><path d="M20 7l1.6 3.8a2.6 2.6 0 0 1-5.2 0L18 7"/></svg></div>
           <div class="trust-text">20+ anni di<br>esperienza</div>
         </div>
         <div class="trust-item">
-          <div class="trust-icon">📍</div>
+          <div class="trust-icon"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21.5S5 15.5 5 10a7 7 0 0 1 14 0c0 5.5-7 11.5-7 11.5z"/><circle cx="12" cy="10" r="2.4"/></svg></div>
           <div class="trust-text">Area Liguria<br>e Basso Piemonte</div>
         </div>
         <div class="trust-item">
-          <div class="trust-icon">🤝</div>
+          <div class="trust-icon"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.38 8.38 0 0 1-8.5 8.5 8.4 8.4 0 0 1-3.9-.9L3 20l1-4.7a8.4 8.4 0 1 1 17-3.8z"/><path d="M9 11.5h.01M12 11.5h.01M15 11.5h.01"/></svg></div>
           <div class="trust-text">Prima consulenza<br>gratuita</div>
         </div>
         <div class="trust-item">
-          <div class="trust-icon">🔒</div>
+          <div class="trust-icon"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div>
           <div class="trust-text">Riservatezza e<br>professionalità</div>
         </div>
       </div>
@@ -1435,7 +1615,7 @@
       <div class="areas-grid">
         <!-- Card 1 -->
         <div class="area-card">
-          <div class="area-icon">👨‍👩‍👧‍👦</div>
+          <div class="area-icon"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><g stroke-width="1.5"><circle cx="6.5" cy="8" r="2.6"/><path d="M2 19.5c.4-2.4 2-3.9 4.5-3.9s4.1 1.5 4.5 3.9"/><circle cx="17.5" cy="8" r="2.6"/><path d="M13 19.5c.4-2.4 2-3.9 4.5-3.9s4.1 1.5 4.5 3.9"/><circle cx="12" cy="12.8" r="1.9"/><path d="M9.4 19.5c.2-1.6 1.1-2.5 2.6-2.5s2.4.9 2.6 2.5"/></g></svg></div>
           <h3>Diritto di Famiglia</h3>
           <p>Seguito in tutte le fasi della vita familiare: separazioni, divorzi, affidamento dei minori e assegno di mantenimento.</p>
           <div class="area-tags">
@@ -1448,7 +1628,7 @@
 
         <!-- Card 2 -->
         <div class="area-card">
-          <div class="area-icon">💰</div>
+          <div class="area-icon"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M15.5 8.5a4.8 4.8 0 1 0 0 7"/><path d="M8.2 10.8h7.4"/><path d="M8.2 13.2h7.4"/></svg></div>
           <h3>Recupero Crediti</h3>
           <p>Azione legale per il recupero di crediti commerciali e personali, con strategie su misura per il tuo caso.</p>
           <div class="area-tags">
@@ -1460,7 +1640,7 @@
 
         <!-- Card 3 -->
         <div class="area-card">
-          <div class="area-icon">🏠</div>
+          <div class="area-icon"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9.5 21v-6h5v6"/></svg></div>
           <h3>Esecuzioni Immobiliari</h3>
           <p>Assistenza nelle aste immobiliari, libere adesioni e opposizioni alle esecuzioni immobiliari.</p>
           <div class="area-tags">
@@ -1472,7 +1652,7 @@
 
         <!-- Card 4 -->
         <div class="area-card">
-          <div class="area-icon">🛡️</div>
+          <div class="area-icon"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 4.6-3 7.6-7 9-4-1.4-7-4.4-7-9V6l7-3z"/><path d="M9 12l2.2 2.2 3.8-4.6"/></svg></div>
           <h3>Responsabilità Civile</h3>
           <p>Risarcimento danni da incidenti stradali, responsabilità medica e danni a persone e cose.</p>
           <div class="area-tags">
@@ -1489,35 +1669,33 @@
   <section class="section section-alt" id="chi-sono">
     <div class="container">
       <div class="about-grid">
-<<<<<<< HEAD
-        <div class="about-photo">👤</div>
-=======
         <div class="about-photo" id="aboutPhoto" role="button" tabindex="0" aria-label="Richiedi una consulenza" title="Richiedi una consulenza">
           <span class="about-photo-cta">Richiedi una consulenza</span>
         </div>
->>>>>>> a0904bb (fix: CORS for Pagliano LP origin on /api/*; LP photo wired to intake flow)
         <div class="about-content">
-          <span class="label" style="display:inline-block;font-size:0.78rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:0.14em;background:rgba(31,174,114,0.08);padding:6px 16px;border-radius:20px;margin-bottom:14px;">Il Professionista</span>
+          <span class="label" style="display:inline-block;font-size:0.78rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:0.14em;background:rgba(105,130,105,0.08);padding:6px 16px;border-radius:20px;margin-bottom:14px;">Il Professionista</span>
           <h2>Avv. Diego Pagliano</h2>
           <p>
             L'Avvocato Diego Pagliano è un avvocato civilista con oltre vent'anni di esperienza nel foro di Genova. 
             Ha maturato una sólida specializzazione nel diritto di famiglia, nel recupero crediti e nelle esecuzioni immobiliari, 
             seguendo centinaia di clienti con professionalità e dedizione.
           </p>
-          <p>
-            Membro dell'Ordine degli Avvocati di Genova, collabora con professionisti di diversa estrazione — notai, 
-            commercialisti e periti — per offrire ai propri assistiti un supporto legale completo e multidisciplinare. 
-            Lo studio opera principalmente in Liguria e nel Basso Piemonte, con particolare attenzione alle esigenze 
-            di ciascun cliente.
-          </p>
-
-          <div class="about-credentials">
-            <div class="credential"><span class="icon">✓</span> Ordine Avvocati Genova</div>
-            <div class="credential"><span class="icon">✓</span> 20+ anni di esperienza</div>
-            <div class="credential"><span class="icon">✓</span> Diritto di famiglia</div>
-            <div class="credential"><span class="icon">✓</span> Recupero crediti</div>
-            <div class="credential"><span class="icon">✓</span> Esecuzioni immobiliari</div>
-            <div class="credential"><span class="icon">✓</span> Residenza: Genova</div>
+          <button type="button" class="blog-read-more" aria-expanded="false" aria-controls="aboutMore"><span class="chev">▾</span> Leggi di più</button>
+          <div class="blog-more about-more" id="aboutMore">
+            <p>
+              Membro dell'Ordine degli Avvocati di Genova, collabora con professionisti di diversa estrazione — notai, 
+              commercialisti e periti — per offrire ai propri assistiti un supporto legale completo e multidisciplinare. 
+              Lo studio opera principalmente in Liguria e nel Basso Piemonte, con particolare attenzione alle esigenze 
+              di ciascun cliente.
+            </p>
+            <div class="about-credentials">
+              <div class="credential"><span class="icon"><svg class="ico" stroke-width="2.2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 12.5l5 5L19.5 7"/></svg></span> Ordine Avvocati Genova</div>
+              <div class="credential"><span class="icon"><svg class="ico" stroke-width="2.2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 12.5l5 5L19.5 7"/></svg></span> 20+ anni di esperienza</div>
+              <div class="credential"><span class="icon"><svg class="ico" stroke-width="2.2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 12.5l5 5L19.5 7"/></svg></span> Diritto di famiglia</div>
+              <div class="credential"><span class="icon"><svg class="ico" stroke-width="2.2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 12.5l5 5L19.5 7"/></svg></span> Recupero crediti</div>
+              <div class="credential"><span class="icon"><svg class="ico" stroke-width="2.2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 12.5l5 5L19.5 7"/></svg></span> Esecuzioni immobiliari</div>
+              <div class="credential"><span class="icon"><svg class="ico" stroke-width="2.2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 12.5l5 5L19.5 7"/></svg></span> Residenza: Genova</div>
+            </div>
           </div>
         </div>
       </div>
@@ -1598,29 +1776,35 @@
 
       <div class="blog-grid">
         <div class="blog-card">
-          <div class="blog-thumb">📄</div>
+          <div class="blog-thumb"><img src="static/blog-famiglia.jpg" alt="Riforma del diritto di famiglia" loading="lazy"></div>
           <div class="blog-body">
             <div class="blog-date">15 Luglio 2025</div>
             <h3>Cosa cambia con la nuova riforma del diritto di famiglia</h3>
             <p>Un'analisi delle principali novità introdotte dalla recente riforma in materia di separazione e divorzio.</p>
+            <button type="button" class="blog-read-more" aria-expanded="false" aria-controls="blogMore1"><span class="chev">▾</span> Leggi di più</button>
+            <div class="blog-more" id="blogMore1"><p>La riforma introduce novità significative: la mediazione familiare diventa obbligatoria prima del ricorso, i tempi per gli accordi sui figli si riducono e si rafforza l'assegno unico. Lo studio assiste i clienti in ogni fase — dalla negoziazione assistita al divorzio consensuale e giudiziale — garantendo soluzioni rapide e la tutela dei minori.</p></div>
           </div>
         </div>
 
         <div class="blog-card">
-          <div class="blog-thumb">🏠</div>
+          <div class="blog-thumb"><img src="static/blog-aste.jpg" alt="Aste immobiliari" loading="lazy"></div>
           <div class="blog-body">
             <div class="blog-date">28 Giugno 2025</div>
             <h3>Guida alle aste immobiliari: come partecipare in sicurezza</h3>
             <p>Tutti i passaggi per partecipare a un'asta immobiliare senza rischi, dalla ricerca all'offerta.</p>
+            <button type="button" class="blog-read-more" aria-expanded="false" aria-controls="blogMore2"><span class="chev">▾</span> Leggi di più</button>
+            <div class="blog-more" id="blogMore2"><p>Partecipare a un'asta richiede preparazione: verifica della documentazione catastale, controllo di ipoteche e pignoramenti, calcolo dei costi di acquisto e sopralluogo dell'immobile. Lo studio offre assistenza completa: consulenza preliminare, deposito dell'offerta, partecipazione all'incanto e gestione post-aggiudicazione, incluse le opposizioni e le aste telematiche.</p></div>
           </div>
         </div>
 
         <div class="blog-card">
-          <div class="blog-thumb">💼</div>
+          <div class="blog-thumb"><img src="static/blog-crediti.jpg" alt="Recupero crediti" loading="lazy"></div>
           <div class="blog-body">
             <div class="blog-date">10 Giugno 2025</div>
             <h3>Recupero crediti: le strategie più efficaci nel 2025</h3>
             <p>Confronto tra le diverse vie legali per il recupero di crediti commerciali e personali.</p>
+            <button type="button" class="blog-read-more" aria-expanded="false" aria-controls="blogMore3"><span class="chev">▾</span> Leggi di più</button>
+            <div class="blog-more" id="blogMore3"><p>Dal decreto ingiuntivo al pignoramento, ogni strategia va calibrata sulla solvibilità del debitore e sul valore del credito. Valutiamo la convenienza dell'azione, proponiamo la negoziazione stragiudiziale quando possibile e seguiamo l'intera procedura esecutiva — pignoramento mobiliare, immobiliare e presso terzi — fino al recupero effettivo del dovuto.</p></div>
           </div>
         </div>
       </div>
@@ -1639,8 +1823,8 @@
             Italia
           </p>
           <p style="margin-top:12px;">
-            📞 <a href="tel:+393805279810">+39 380 527 9810</a><br>
-            ✉️ <a href="mailto:studio@avvocatopagliano.it">studio@avvocatopagliano.it</a>
+            <svg class="ico contact-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 2 .7 2.9a2 2 0 0 1-.5 2.1L8 10a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5c.9.3 1.9.6 2.9.7a2 2 0 0 1 1.7 2z"/></svg> <a href="tel:+393805279810">+39 380 527 9810</a><br>
+            <svg class="ico contact-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg> <a href="mailto:studio@avvocatopagliano.it">studio@avvocatopagliano.it</a>
           </p>
         </div>
 
@@ -1704,9 +1888,9 @@
       <div style="font-size:0.9rem; flex:1; min-width:300px;">
         <strong>Cookie Policy</strong><br>
         Questo sito utilizza cookie tecnici essenziali per il funzionamento. Non tracciamo utenti né utilizziamo cookie di profilazione.
-        <a href="#" onclick="openModal('cookieModal'); return false;" style="color:#1FAE72; text-decoration:underline;">Maggiori informazioni</a>
+        <a href="#" onclick="openModal('cookieModal'); return false;" style="color:#698269; text-decoration:underline;">Maggiori informazioni</a>
       </div>
-      <button onclick="acceptCookies()" style="padding:10px 24px; background:#1FAE72; color:#fff; border:none; border-radius:6px; font-weight:600; cursor:pointer; white-space:nowrap;">Accetta</button>
+      <button onclick="acceptCookies()" style="padding:10px 24px; background:#698269; color:#fff; border:none; border-radius:6px; font-weight:600; cursor:pointer; white-space:nowrap;">Accetta</button>
     </div>
   </div>
 
@@ -1746,14 +1930,17 @@
   </div>
 
   <!-- ═══════════════ CHAT TOGGLE BUTTON ═══════════════ -->
-  <button id="chat-toggle-btn" title="Apri chat con Alessia" aria-label="Apri assistente virtuale">💬</button>
+  <button id="chat-toggle-btn" title="Apri chat con Alessia" aria-label="Apri assistente virtuale"><img id="chat-toggle-avatar" src="static/chat-avatar.png" alt="Apri chat"></button>
 
   <!-- ═══════════════ CHAT PANEL ═══════════════ -->
   <div id="chat-panel" style="display:none;">
     <div id="chat-panel-header">
-      <div>
-        <span class="status-dot"></span>
-        <span class="title">Alessia — Assistente Legale</span>
+      <div class="chat-id">
+        <img class="chat-header-avatar" src="static/chat-avatar.png" alt="Alessia">
+        <div>
+          <span class="status-dot"></span><span class="title">Alessia</span>
+          <span class="subtitle">Assistente digitale dello studio legale</span>
+        </div>
       </div>
       <button id="chat-close-btn" aria-label="Chiudi chat">✕</button>
     </div>
@@ -1767,7 +1954,7 @@
   <!-- ═══════════════ SUCCESS OVERLAY ═══════════════ -->
   <div class="success-overlay" id="successOverlay">
     <div class="success-modal">
-      <div class="check-icon">✓</div>
+      <div class="check-icon"><svg class="ico" stroke-width="2.2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 12.5l5 5L19.5 7"/></svg></div>
       <h3>Richiesta Inviata!</h3>
       <p>Grazie! L'Avv. Pagliano o un membro del suo staff La contatterà entro 24 ore per fissare un appuntamento.</p>
       <button class="btn btn-primary" onclick="document.getElementById('successOverlay').classList.remove('show')">Chiudi</button>
@@ -1813,6 +2000,19 @@
           hamburger.classList.remove('active');
           nav.classList.remove('open');
           hamburger.setAttribute('aria-expanded', 'false');
+        });
+      });
+    })();
+
+    /* ── Blog "Leggi di più" dropdown toggles ──────────────── */
+    (function() {
+      var toggles = document.querySelectorAll('.blog-read-more');
+      toggles.forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var more = document.getElementById(btn.getAttribute('aria-controls'));
+          var open = btn.getAttribute('aria-expanded') === 'true';
+          btn.setAttribute('aria-expanded', String(!open));
+          if (more) more.classList.toggle('open', !open);
         });
       });
     })();
@@ -1876,8 +2076,8 @@
         // Build FormData
         var fd = new FormData(form);
 
-        // POST to /api/intake
-        fetch('https://web-production-ab54f.up.railway.app/api/intake', {
+        // POST to /api/intake on the LexFlow CRM (multi-tenant: pagliano workspace)
+        fetch('https://web-production-031a6.up.railway.app/api/intake/pagliano', {
           method: 'POST',
           body: fd,
           // No Content-Type header — let browser set it for FormData
@@ -1919,8 +2119,6 @@
       });
     })();
 
-<<<<<<< HEAD
-=======
     /* ── "Il Professionista" photo → intake flow ─────────────── */
     // Diego's photo placeholder (id="aboutPhoto") is a clickable entry point
     // into the intake flow: it scrolls to and focuses the intake form, whose
@@ -1947,7 +2145,6 @@
       });
     })();
 
->>>>>>> a0904bb (fix: CORS for Pagliano LP origin on /api/*; LP photo wired to intake flow)
     /* ── Modal helpers ─────────────────────────────────────── */
     window.openModal = function(id) {
       var el = document.getElementById(id);
@@ -1983,6 +2180,6 @@
   </script>
 
   <!-- ═══════════════ CHAT WIDGET JS ──────────────────────── -->
-  <script src="/static/chat-widget.js"></script>
+  <script src="static/chat-widget.js"></script>
 </body>
 </html>

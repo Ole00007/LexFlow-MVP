@@ -1,7 +1,7 @@
 /**
  * Pagliano Law Firm — Chat Widget ("Alessia")
  * Standalone: no external dependencies, no API calls.
- * Loaded via <script src="/static/chat-widget.js"></script>
+ * Loaded via <script src="static/chat-widget.js"></script>
  */
 (function () {
   "use strict";
@@ -11,6 +11,7 @@
     open: false,
     step: "greeting",
     flow: {}, // accumulates user answers per conversation
+    submitting: false,
   };
 
   /* ── DOM refs (lazy) ───────────────────────────────────── */
@@ -47,10 +48,11 @@
     // Send initial bot message after a short delay
     setTimeout(function () {
       addBotMessage(
-        "Buongiorno! Sono Alessia, l'assistente virtuale dell'Avv. Pagliano. Come posso aiutarla?"
+        "Buongiorno! Sono Alessia, l'assistente digitale dello studio legale. Come posso aiutarla?"
       );
       showOptions([
         "Richiedere una consulenza",
+        "Prenotare un appuntamento",
         "Informazioni sui servizi",
         "Contattare lo studio",
       ]);
@@ -73,19 +75,30 @@
   /* ── Messaging helpers ─────────────────────────────────── */
   function addBotMessage(text, extraClass) {
     getEls();
+    var row = document.createElement("div");
+    row.className = "chat-row bot";
+    var avatar = document.createElement("img");
+    avatar.className = "chat-avatar-mini";
+    avatar.src = "static/chat-avatar.png";
+    avatar.alt = "Alessia";
     var div = document.createElement("div");
     div.className = "chat-msg bot" + (extraClass ? " " + extraClass : "");
     div.innerHTML = text;
-    messages.appendChild(div);
+    row.appendChild(avatar);
+    row.appendChild(div);
+    messages.appendChild(row);
     messages.scrollTop = messages.scrollHeight;
   }
 
   function addUserMessage(text) {
     getEls();
+    var row = document.createElement("div");
+    row.className = "chat-row user";
     var div = document.createElement("div");
     div.className = "chat-msg user";
     div.textContent = text;
-    messages.appendChild(div);
+    row.appendChild(div);
+    messages.appendChild(row);
     messages.scrollTop = messages.scrollHeight;
   }
 
@@ -115,13 +128,222 @@
       case "Richiedere una consulenza":
         handleConsultFlow();
         break;
+      case "Prenotare un appuntamento":
+        handleAppointmentFlow();
+        break;
       case "Informazioni sui servizi":
         showServices();
         break;
       case "Contattare lo studio":
         showContactInfo();
         break;
+      case "Nello studio (Via Gropallo 10/2, Genova)":
+        handleApptMode(choice);
+        break;
+      case "Per telefono":
+        handleApptMode(choice);
+        break;
     }
+  }
+
+  /* ── Appointment booking flow ──────────────────────────── */
+  function handleAppointmentFlow() {
+    state.step = "appt_name";
+    state.flow = {};
+    setTimeout(function () {
+      addBotMessage(
+        "Certamente! Posso prenotare un appuntamento per Lei. <br><br><b>1. Nome e Cognome</b>"
+      );
+    }, 300);
+    setTimeout(function () {
+      input.placeholder = "Es: Mario Rossi";
+      input.value = "";
+      input.focus();
+      sendBtn.textContent = "Invia";
+    }, 900);
+  }
+
+  function handleApptName(val) {
+    state.flow.name = val;
+    state.step = "appt_email";
+    addBotMessage("Grazie! E la sua email?");
+    setTimeout(function () {
+      input.placeholder = "Es: mario@example.com";
+      input.value = "";
+      input.focus();
+    }, 300);
+  }
+
+  function handleApptEmail(val) {
+    state.flow.email = val;
+    state.step = "appt_phone";
+    addBotMessage("Perfetto. E il suo numero di telefono?");
+    setTimeout(function () {
+      input.placeholder = "Es: +39 333 1234567";
+      input.value = "";
+      input.focus();
+    }, 300);
+  }
+
+  function handleApptPhone(val) {
+    state.flow.phone = val;
+    state.step = "appt_mode";
+    addBotMessage("Dove preferisce l'appuntamento?");
+    setTimeout(function () {
+      input.placeholder = "";
+      input.value = "";
+      showOptions(["Nello studio (Via Gropallo 10/2, Genova)", "Per telefono"]);
+    }, 300);
+  }
+
+  function handleApptMode(choice) {
+    state.flow.mode = choice;
+    state.step = "appt_date";
+    addBotMessage(
+      "Quale data preferisce? <br><br><i>Formato: giorno/mese/anno, es. 15/09/2026</i>"
+    );
+    setTimeout(function () {
+      input.placeholder = "Es: 15/09/2026";
+      input.value = "";
+      input.focus();
+    }, 300);
+  }
+
+  function handleApptDate(val) {
+    var m = val.trim().match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})$/);
+    var iso = val.trim().match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+    if (!m && !iso) {
+      addBotMessage(
+        "Non ho capito la data. Può riscriverla nel formato giorno/mese/anno, es. 15/09/2026?"
+      );
+      return;
+    }
+    var day, month, year;
+    if (m) {
+      day = parseInt(m[1], 10);
+      month = parseInt(m[2], 10);
+      year = parseInt(m[3], 10);
+      if (year < 100) year += 2000;
+    } else {
+      year = parseInt(iso[1], 10);
+      month = parseInt(iso[2], 10);
+      day = parseInt(iso[3], 10);
+    }
+    if (month < 1 || month > 12 || day < 1 || day > 31) {
+      addBotMessage(
+        "Non ho capito la data. Può riscriverla nel formato giorno/mese/anno, es. 15/09/2026?"
+      );
+      return;
+    }
+    state.flow.dateISO =
+      year + "-" + (month < 10 ? "0" + month : "" + month) + "-" + (day < 10 ? "0" + day : "" + day);
+    state.step = "appt_time";
+    addBotMessage(
+      "A che ora preferisce? <br><br><i>Formato: ore:minuti, es. 10:00</i>"
+    );
+    setTimeout(function () {
+      input.placeholder = "Es: 10:00";
+      input.value = "";
+      input.focus();
+    }, 300);
+  }
+
+  function handleApptTime(val) {
+    var m = val.trim().match(/^(\d{1,2})[.:]?(\d{0,2})$/);
+    if (!m) {
+      addBotMessage(
+        "Non ho capito l'orario. Può riscriverlo nel formato ore:minuti, es. 10:00?"
+      );
+      return;
+    }
+    var hour = parseInt(m[1], 10);
+    var minutes = m[2] ? parseInt(m[2], 10) : 0;
+    if (hour > 23 || minutes > 59) {
+      addBotMessage(
+        "Non ho capito l'orario. Può riscriverlo nel formato ore:minuti, es. 10:00?"
+      );
+      return;
+    }
+    state.flow.eventISO =
+      state.flow.dateISO +
+      "T" +
+      (hour < 10 ? "0" + hour : "" + hour) +
+      ":" +
+      (minutes < 10 ? "0" + minutes : "" + minutes) +
+      ":00";
+    state.step = "appt_desc";
+    addBotMessage(
+      "Ultimo passaggio: mi aiuti a descrivere brevemente il motivo dell'appuntamento in 2-3 righe. <br><br><i>Questo ci aiuterà a prepararsi al meglio.</i>"
+    );
+    setTimeout(function () {
+      input.placeholder = "Es: Ho bisogno di una consulenza per una separazione...";
+      input.value = "";
+      input.focus();
+    }, 300);
+  }
+
+  function handleApptDesc(val) {
+    state.flow.description = val;
+    addBotMessage("⏳ Sto inviando la richiesta allo studio...");
+
+    var isPhone = state.flow.mode === "Per telefono";
+    var payload = {
+      fullname: state.flow.name,
+      email: state.flow.email,
+      phone: state.flow.phone,
+      event_date: state.flow.eventISO,
+      title: "Appuntamento — " + (isPhone ? "per telefono" : "in studio"),
+      description: state.flow.description,
+      location: isPhone
+        ? "Telefono"
+        : "Studio Legale — Via Gropallo 10/2, 16122 Genova",
+      gdpr_consent: true,
+      source: "pagliano_chatbot",
+    };
+
+    fetch("https://web-production-ab54f.up.railway.app/api/appointments", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    })
+      .then(function (resp) {
+        return resp.json();
+      })
+      .then(function (result) {
+        if (result.error) {
+          addBotMessage(
+            "Mi spiace, si è verificato un errore nell'invio. Per cortesia, provi a usare il modulo di contatto nella pagina principale, oppure ci chiami al <a href=\"tel:+393805279810\" style=\"color:#698269;\">+39 380 527 9810</a>."
+          );
+        } else {
+          var datePart = state.flow.eventISO.split("T");
+          addBotMessage(
+            "Appuntamento richiesto con successo! ✓<br><br>" +
+              "L'Avv. Pagliano o un membro del suo staff La contatterà entro 24 ore per confermare data e ora.<br><br>" +
+              "<b>Riepilogo:</b><br>" +
+              "📧 " + state.flow.email + "<br>" +
+              "📞 " + state.flow.phone + "<br>" +
+              "📅 " + datePart[0] + " alle ore " + datePart[1].slice(0, 5) + "<br>" +
+              "📍 " + state.flow.mode
+          );
+        }
+      })
+      .catch(function (err) {
+        addBotMessage(
+          "Mi spiace, si è verificato un errore nell'invio. Per cortesia, provi a usare il modulo di contatto nella pagina principale, oppure ci chiami al <a href=\"tel:+393805279810\" style=\"color:#698269;\">+39 380 527 9810</a>."
+        );
+      })
+      .finally(function () {
+        setTimeout(function () {
+          showOptions([
+            "Richiedere una consulenza",
+            "Prenotare un appuntamento",
+            "Informazioni sui servizi",
+            "Contattare lo studio",
+          ]);
+        }, 1500);
+      });
+
+    state.step = "done";
   }
 
   /* ── Consultation flow (multi-step) ────────────────────── */
@@ -178,21 +400,13 @@
 
   function handleConsultDesc(val) {
     state.flow.description = val;
-    addBotMessage(
-      "Grazie! Una richiesta è stata inviata.<br><br>L'Avv. Pagliano o un membro del suo staff La contatterà entro 24 ore."
-    );
+    state.flow.source = "pagliano_chatbot";
+    state.flow.gdpr_consent = true;
+    state.flow.practice_area = "Altro";
+
+    // Post to CRM intake endpoint
+    submitToCRM(state.flow, "consultation");
     state.step = "done";
-    // Disable input
-    setTimeout(function () {
-      if (input) input.disabled = true;
-      setTimeout(function () {
-        showOptions([
-          "Richiedere una consulenza",
-          "Informazioni sui servizi",
-          "Contattare lo studio",
-        ]);
-      }, 1500);
-    }, 500);
   }
 
   /* ── Services info ─────────────────────────────────────── */
@@ -223,9 +437,9 @@
       "Ecco i contatti dello Studio Legale Pagliano:<br><br>" +
       "📍 <b>Indirizzo:</b><br>Via Gropallo 10/2, 16122 Genova<br><br>" +
       "📞 <b>Telefono:</b><br>" +
-      '<a href="tel:+393805279810" style="color:#1FAE72;text-decoration:none;">+39 380 527 9810</a><br><br>' +
+      '<a href="tel:+393805279810" style="color:#698269;text-decoration:none;">+39 380 527 9810</a><br><br>' +
       "✉️ <b>Email:</b><br>" +
-      '<a href="mailto:studio@avvocatopagliano.it" style="color:#1FAE72;text-decoration:none;">studio@avvocatopagliano.it</a>';
+      '<a href="mailto:studio@avvocatopagliano.it" style="color:#698269;text-decoration:none;">studio@avvocatopagliano.it</a>';
     addBotMessage(html);
     setTimeout(function () {
       showOptions([
@@ -234,6 +448,78 @@
         "Contattare lo studio",
       ]);
     }, 500);
+  }
+
+  /* ── CRM submission helper ─────────────────────────────── */
+  function submitToCRM(data, type) {
+    addBotMessage("⏳ Sto inviando la richiesta allo studio...");
+
+    var payload = new FormData();
+    payload.append("fullname", data.name || "");
+    payload.append("email", data.email || "");
+    payload.append("phone", data.phone || "");
+    payload.append("message", data.description || "");
+    payload.append("practice_area", data.practice_area || "Altro");
+    payload.append("source", data.source || "pagliano_chatbot");
+    payload.append("gdpr_consent", "true");
+    if (data.date) {
+      payload.append("appointment_date", data.date);
+    }
+    if (type === "appointment") {
+      payload.append("intent", "appointment");
+    }
+
+    fetch("https://web-production-031a6.up.railway.app/api/intake/pagliano", {
+      method: "POST",
+      body: payload,
+    })
+      .then(function (resp) {
+        return resp.json();
+      })
+      .then(function (result) {
+        if (result.error) {
+          addBotMessage(
+            "Mi spiace, si è verificato un errore. " +
+              "Per cortesia, provi a usare il modulo di contatto " +
+              'nella pagina principale, oppure ci chiami al <a href="tel:+393805279810" style="color:#698269;">+39 380 527 9810</a>.'
+          );
+        } else {
+          var msg = "";
+          if (type === "appointment") {
+            msg =
+              "Appuntamento prenotato con successo! ✓<br><br>" +
+              "L'Avv. Pagliano o un membro del suo staff La contatterà " +
+              "entro 24 ore per confermare la data e l'ora.<br><br>" +
+              '<b>Riepilogo:</b><br>' +
+              "📧 " + data.email + "<br>" +
+              "📞 " + data.phone + "<br>" +
+              "📅 " + data.date;
+          } else {
+            msg =
+              "Richiesta inviata con successo! ✓<br><br>" +
+              "L'Avv. Pagliano o un membro del suo staff La contatterà " +
+              "entro 24 ore per fissare un appuntamento.";
+          }
+          addBotMessage(msg);
+        }
+      })
+      .catch(function (err) {
+        addBotMessage(
+          "Errore di connessione. " +
+            'Per cortesia, provi a usare il modulo di contatto ' +
+            'nella pagina principale, oppure ci chiami al <a href="tel:+393805279810" style="color:#698269;">+39 380 527 9810</a>.'
+        );
+      })
+      .finally(function () {
+        setTimeout(function () {
+          showOptions([
+            "Richiedere una consulenza",
+            "Prenotare un appuntamento",
+            "Informazioni sui servizi",
+            "Contattare lo studio",
+          ]);
+        }, 1500);
+      });
   }
 
   /* ── Send handler ──────────────────────────────────────── */
@@ -257,6 +543,24 @@
         break;
       case "ask_desc":
         handleConsultDesc(val);
+        break;
+      case "appt_name":
+        handleApptName(val);
+        break;
+      case "appt_email":
+        handleApptEmail(val);
+        break;
+      case "appt_phone":
+        handleApptPhone(val);
+        break;
+      case "appt_date":
+        handleApptDate(val);
+        break;
+      case "appt_time":
+        handleApptTime(val);
+        break;
+      case "appt_desc":
+        handleApptDesc(val);
         break;
       default:
         // Unknown step — just show a fallback
